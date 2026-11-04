@@ -35,6 +35,12 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connect
 // se cambiará esta única línea por una implementación que lea el token.
 builder.Services.AddScoped<ITenantProvider, DemoTenantProvider>();
 
+// CORS: permitir que el frontend Angular (localhost:4200) consuma la API.
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+    policy.WithOrigins("http://localhost:4200")
+          .AllowAnyHeader()
+          .AllowAnyMethod()));
+
 var app = builder.Build();
 
 // Pipeline HTTP.
@@ -44,6 +50,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(); // UI para probar la API en /scalar/v1
 }
 
+app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
