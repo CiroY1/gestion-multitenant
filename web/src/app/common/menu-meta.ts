@@ -78,6 +78,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/recetas',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-notas',
+        label: 'Notas CD',
+        link: '/inventario/notas',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

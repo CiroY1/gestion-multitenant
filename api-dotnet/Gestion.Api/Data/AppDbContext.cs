@@ -26,6 +26,8 @@ public class AppDbContext : DbContext
     public DbSet<Receta> Recetas => Set<Receta>();
     public DbSet<RecetaIngrediente> RecetaIngredientes => Set<RecetaIngrediente>();
     public DbSet<Consecutivo> Consecutivos => Set<Consecutivo>();
+    public DbSet<Nota> Notas => Set<Nota>();
+    public DbSet<NotaLinea> NotaLineas => Set<NotaLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -77,6 +79,23 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RecetaIngrediente>()
             .HasOne(i => i.Producto).WithMany()
             .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Notas crédito/débito
+        modelBuilder.Entity<Nota>().HasIndex(n => n.TenantId);
+        modelBuilder.Entity<Nota>().HasIndex(n => new { n.TenantId, n.Numero });
+        modelBuilder.Entity<NotaLinea>().Property(l => l.CostoUnitario).HasPrecision(12, 2);
+        modelBuilder.Entity<Nota>()
+            .HasMany(n => n.Lineas).WithOne(l => l.Nota!)
+            .HasForeignKey(l => l.NotaId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Nota>()
+            .HasOne(n => n.Remision).WithMany()
+            .HasForeignKey(n => n.RemisionId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Nota>()
+            .HasOne(n => n.Recepcion).WithMany()
+            .HasForeignKey(n => n.RecepcionId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<NotaLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
 
         // Terceros
         modelBuilder.Entity<Proveedor>().HasIndex(p => p.TenantId);

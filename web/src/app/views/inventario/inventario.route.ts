@@ -3,6 +3,7 @@ import { Productos } from './productos/productos'
 import { Recepciones } from './recepciones/recepciones'
 import { Remisiones } from './remisiones/remisiones'
 import { Recetas } from './recetas/recetas'
+import { Notas } from './notas/notas'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -24,5 +25,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'recetas',
     component: Recetas,
     data: { title: 'Recetas' },
+  },
+  {
+    path: 'notas',
+    component: Notas,
+    data: { title: 'Notas crédito/débito' },
   },
 ]
