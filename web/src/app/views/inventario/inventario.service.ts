@@ -35,6 +35,15 @@ export interface Recepcion {
   items: number
 }
 
+export interface Remision {
+  id: number
+  cliente: string
+  observaciones?: string
+  fecha: string
+  unidades: number
+  items: number
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
   private http = inject(HttpClient)
@@ -76,6 +85,18 @@ export class InventarioService {
     lineas: { productoId: number; cantidad: number; costoUnitario: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/recepciones`, dto)
+  }
+
+  getRemisiones(): Observable<Remision[]> {
+    return this.http.get<Remision[]>(`${this.base}/remisiones`)
+  }
+
+  crearRemision(dto: {
+    cliente: string
+    observaciones?: string
+    lineas: { productoId: number; cantidad: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/remisiones`, dto)
   }
 
   registrarMovimiento(dto: {
