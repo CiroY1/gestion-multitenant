@@ -66,6 +66,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/recepciones',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-remisiones',
+        label: 'Remisiones',
+        link: '/inventario/remisiones',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

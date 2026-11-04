@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
     public DbSet<MovimientoStock> MovimientosStock => Set<MovimientoStock>();
     public DbSet<Recepcion> Recepciones => Set<Recepcion>();
     public DbSet<RecepcionLinea> RecepcionLineas => Set<RecepcionLinea>();
+    public DbSet<Remision> Remisiones => Set<Remision>();
+    public DbSet<RemisionLinea> RemisionLineas => Set<RemisionLinea>();
 
     // Auth / multi-tenant
     public DbSet<Empresa> Empresas => Set<Empresa>();
@@ -40,6 +42,14 @@ public class AppDbContext : DbContext
             .HasMany(r => r.Lineas)
             .WithOne(l => l.Recepcion!)
             .HasForeignKey(l => l.RecepcionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Remisiones
+        modelBuilder.Entity<Remision>().HasIndex(r => r.TenantId);
+        modelBuilder.Entity<Remision>()
+            .HasMany(r => r.Lineas)
+            .WithOne(l => l.Remision!)
+            .HasForeignKey(l => l.RemisionId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Empresa: el Id (tenantId) lo asigna la app, no es autogenerado.

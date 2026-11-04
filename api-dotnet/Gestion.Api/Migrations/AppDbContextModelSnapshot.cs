@@ -232,6 +232,61 @@ namespace Gestion.Api.Migrations
                     b.ToTable("RecepcionLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cliente")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Observaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Remisiones");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.RemisionLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RemisionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("RemisionId");
+
+                    b.ToTable("RemisionLineas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Auth.Usuario", b =>
                 {
                     b.HasOne("Gestion.Api.Auth.Empresa", "Empresa")
@@ -284,6 +339,25 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Recepcion");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.RemisionLinea", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Remision", "Remision")
+                        .WithMany("Lineas")
+                        .HasForeignKey("RemisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Remision");
+                });
+
             modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
                 {
                     b.Navigation("Usuarios");
@@ -300,6 +374,11 @@ namespace Gestion.Api.Migrations
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>
+                {
+                    b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
                 {
                     b.Navigation("Lineas");
                 });
