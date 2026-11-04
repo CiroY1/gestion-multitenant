@@ -72,6 +72,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/remisiones',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-recetas',
+        label: 'Recetas',
+        link: '/inventario/recetas',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

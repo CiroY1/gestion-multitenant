@@ -114,7 +114,9 @@ public class ProductosController : ControllerBase
         var tieneHistorial =
             await _db.MovimientosStock.AnyAsync(m => m.ProductoId == id && m.TenantId == t) ||
             await _db.RecepcionLineas.AnyAsync(l => l.ProductoId == id) ||
-            await _db.RemisionLineas.AnyAsync(l => l.ProductoId == id);
+            await _db.RemisionLineas.AnyAsync(l => l.ProductoId == id) ||
+            await _db.RecetaIngredientes.AnyAsync(i => i.ProductoId == id) ||
+            await _db.Recetas.AnyAsync(r => r.ProductoFinalId == id && r.TenantId == t);
         if (tieneHistorial)
             return BadRequest("No se puede eliminar: el producto tiene movimientos o documentos asociados.");
 

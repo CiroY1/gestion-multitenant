@@ -44,6 +44,14 @@ export interface Remision {
   items: number
 }
 
+export interface Receta {
+  id: number
+  nombre: string
+  productoFinalId: number
+  productoFinal?: string
+  ingredientes: number
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
   private http = inject(HttpClient)
@@ -97,6 +105,22 @@ export class InventarioService {
     lineas: { productoId: number; cantidad: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/remisiones`, dto)
+  }
+
+  getRecetas(): Observable<Receta[]> {
+    return this.http.get<Receta[]>(`${this.base}/recetas`)
+  }
+
+  crearReceta(dto: {
+    nombre: string
+    productoFinalId: number
+    ingredientes: { productoId: number; cantidad: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/recetas`, dto)
+  }
+
+  producir(recetaId: number, cantidad: number): Observable<unknown> {
+    return this.http.post(`${this.base}/recetas/${recetaId}/producir`, { cantidad })
   }
 
   registrarMovimiento(dto: {
