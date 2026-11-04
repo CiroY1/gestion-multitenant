@@ -5,6 +5,13 @@ import { Invoices } from './invoices/invoices/invoices'
 
 export const VIEW_ROUTES: Route[] = [
   {
+    path: 'inventario',
+    loadChildren: () =>
+      import('./inventario/inventario.route').then(
+        (mod) => mod.INVENTARIO_ROUTES
+      ),
+  },
+  {
     path: 'pages',
     loadChildren: () =>
       import('./pages/pages.route').then((mod) => mod.PAGES_ROUTES),

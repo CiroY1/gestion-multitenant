@@ -44,6 +44,25 @@ export const MENU: MenuItem[] = [
     ],
   },
   {
+    key: 'gestion',
+    label: 'GESTIÓN',
+    isTitle: true,
+  },
+  {
+    key: 'inventario',
+    icon: 'iconamoon:box-duotone',
+    label: 'Inventario',
+    collapsed: false,
+    subMenu: [
+      {
+        key: 'inventario-productos',
+        label: 'Productos',
+        link: '/inventario/productos',
+        parentKey: 'inventario',
+      },
+    ],
+  },
+  {
     key: 'apps',
     label: 'APPS',
     isTitle: true,

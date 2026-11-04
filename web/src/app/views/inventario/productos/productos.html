@@ -1,0 +1,63 @@
+<app-page-title [title]="'Inventario'" [subtitle]="'Productos'" />
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0">Productos</h5>
+          <button class="btn btn-sm btn-primary" (click)="cargar()">
+            Actualizar
+          </button>
+        </div>
+
+        @if (cargando()) {
+          <p class="text-muted mb-0">Cargando productos…</p>
+        } @else if (error()) {
+          <div class="alert alert-danger mb-0">{{ error() }}</div>
+        } @else if (productos().length === 0) {
+          <p class="text-muted mb-0">No hay productos todavía.</p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover table-centered mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Nombre</th>
+                  <th>Categoría</th>
+                  <th class="text-end">Precio</th>
+                  <th class="text-end">Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of productos(); track p.id) {
+                  <tr>
+                    <td>{{ p.id }}</td>
+                    <td>
+                      <span class="fw-medium">{{ p.nombre }}</span>
+                      @if (p.descripcion) {
+                        <small class="text-muted d-block">{{ p.descripcion }}</small>
+                      }
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark">{{ p.categoria }}</span>
+                    </td>
+                    <td class="text-end">{{ p.precio | number: '1.2-2' }}</td>
+                    <td class="text-end">
+                      <span
+                        class="badge"
+                        [class.bg-success]="p.stock > 0"
+                        [class.bg-danger]="p.stock === 0"
+                        >{{ p.stock }}</span
+                      >
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
