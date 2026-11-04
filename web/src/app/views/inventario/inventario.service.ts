@@ -58,6 +58,36 @@ export interface Receta {
   ingredientes: number
 }
 
+export type TipoNota = 'Credito' | 'Debito'
+
+export interface Nota {
+  id: number
+  numero: string
+  tipo: TipoNota
+  documentoOrigen?: string
+  motivo?: string
+  fecha: string
+  estado: EstadoDocumento
+  total: number
+  items: number
+}
+
+/** Línea de un documento origen (recepción o remisión) usada al crear una nota. */
+export interface DocumentoLinea {
+  productoId: number
+  producto?: string
+  cantidad: number
+  costoUnitario?: number
+}
+
+/** Cabecera + líneas de un documento origen confirmado. */
+export interface DocumentoDetalle {
+  id: number
+  numero: string
+  estado: EstadoDocumento
+  lineas: DocumentoLinea[]
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
   private http = inject(HttpClient)
@@ -127,6 +157,35 @@ export class InventarioService {
 
   anularRemision(id: number): Observable<unknown> {
     return this.http.post(`${this.base}/remisiones/${id}/anular`, {})
+  }
+
+  getRecepcion(id: number): Observable<DocumentoDetalle> {
+    return this.http.get<DocumentoDetalle>(`${this.base}/recepciones/${id}`)
+  }
+
+  getRemision(id: number): Observable<DocumentoDetalle> {
+    return this.http.get<DocumentoDetalle>(`${this.base}/remisiones/${id}`)
+  }
+
+  getNotas(): Observable<Nota[]> {
+    return this.http.get<Nota[]>(`${this.base}/notas`)
+  }
+
+  crearNota(dto: {
+    tipo: TipoNota
+    documentoOrigenId: number
+    motivo?: string
+    lineas: { productoId: number; cantidad: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/notas`, dto)
+  }
+
+  confirmarNota(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/notas/${id}/confirmar`, {})
+  }
+
+  anularNota(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/notas/${id}/anular`, {})
   }
 
   getRecetas(): Observable<Receta[]> {
