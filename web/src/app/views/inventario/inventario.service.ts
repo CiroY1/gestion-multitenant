@@ -26,20 +26,26 @@ export interface Movimiento {
   fecha: string
 }
 
+export type EstadoDocumento = 'Borrador' | 'Confirmado' | 'Anulado'
+
 export interface Recepcion {
   id: number
+  numero: string
   proveedor: string
   observaciones?: string
   fecha: string
+  estado: EstadoDocumento
   total: number
   items: number
 }
 
 export interface Remision {
   id: number
+  numero: string
   cliente: string
   observaciones?: string
   fecha: string
+  estado: EstadoDocumento
   unidades: number
   items: number
 }
@@ -95,6 +101,14 @@ export class InventarioService {
     return this.http.post(`${this.base}/recepciones`, dto)
   }
 
+  confirmarRecepcion(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/recepciones/${id}/confirmar`, {})
+  }
+
+  anularRecepcion(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/recepciones/${id}/anular`, {})
+  }
+
   getRemisiones(): Observable<Remision[]> {
     return this.http.get<Remision[]>(`${this.base}/remisiones`)
   }
@@ -105,6 +119,14 @@ export class InventarioService {
     lineas: { productoId: number; cantidad: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/remisiones`, dto)
+  }
+
+  confirmarRemision(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/remisiones/${id}/confirmar`, {})
+  }
+
+  anularRemision(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/remisiones/${id}/anular`, {})
   }
 
   getRecetas(): Observable<Receta[]> {

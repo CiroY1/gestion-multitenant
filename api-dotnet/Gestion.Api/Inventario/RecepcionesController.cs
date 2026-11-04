@@ -12,13 +12,17 @@ namespace Gestion.Api.Inventario;
 [Route("api/[controller]")]
 public class RecepcionesController : ControllerBase
 {
+    private const string TipoDoc = "REC";
+
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
+    private readonly ConsecutivoService _consecutivos;
 
-    public RecepcionesController(AppDbContext db, ITenantProvider tenant)
+    public RecepcionesController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos)
     {
         _db = db;
         _tenant = tenant;
+        _consecutivos = consecutivos;
     }
 
     [HttpGet]
@@ -29,7 +33,7 @@ public class RecepcionesController : ControllerBase
             .Where(r => r.TenantId == t)
             .OrderByDescending(r => r.Fecha)
             .Select(r => new RecepcionDto(
-                r.Id, r.Proveedor, r.Observaciones, r.Fecha,
+                r.Id, r.Numero, r.Proveedor, r.Observaciones, r.Fecha, r.Estado,
                 r.Lineas.Sum(l => l.Cantidad * l.CostoUnitario),
                 r.Lineas.Count))
             .ToListAsync();
@@ -45,11 +49,7 @@ public class RecepcionesController : ControllerBase
             .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
         if (r is null) return NotFound();
 
-        return Ok(new RecepcionDetalleDto(
-            r.Id, r.Proveedor, r.Observaciones, r.Fecha,
-            r.Lineas.Sum(l => l.Cantidad * l.CostoUnitario),
-            r.Lineas.Select(l => new RecepcionLineaDto(
-                l.ProductoId, l.Producto!.Nombre, l.Cantidad, l.CostoUnitario)).ToList()));
+        return Ok(ToDetalle(r));
     }
 
     [HttpPost]
@@ -77,11 +77,14 @@ public class RecepcionesController : ControllerBase
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
+        // Se crea como BORRADOR: no se mueve stock hasta confirmar.
         var recepcion = new Recepcion
         {
+            Numero = await _consecutivos.SiguienteAsync(t, TipoDoc),
             Proveedor = dto.Proveedor,
             Observaciones = dto.Observaciones,
             Fecha = DateTime.UtcNow,
+            Estado = EstadoDocumento.Borrador,
             TenantId = t,
         };
 
@@ -93,8 +96,31 @@ public class RecepcionesController : ControllerBase
                 Cantidad = l.Cantidad,
                 CostoUnitario = l.CostoUnitario,
             });
+        }
 
-            // Suma de stock atómica.
+        _db.Recepciones.Add(recepcion);
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return CreatedAtAction(nameof(Obtener), new { id = recepcion.Id }, ToDetalle(recepcion));
+    }
+
+    /// <summary>Confirma un borrador: suma el stock y genera los movimientos de entrada.</summary>
+    [HttpPost("{id:int}/confirmar")]
+    public async Task<ActionResult<RecepcionDetalleDto>> Confirmar(int id)
+    {
+        var t = _tenant.GetTenantId();
+        var r = await _db.Recepciones
+            .Include(x => x.Lineas).ThenInclude(l => l.Producto)
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
+        if (r is null) return NotFound();
+        if (r.Estado != EstadoDocumento.Borrador)
+            return BadRequest("Solo se puede confirmar una recepción en borrador.");
+
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        foreach (var l in r.Lineas)
+        {
             await _db.Database.ExecuteSqlInterpolatedAsync(
                 $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {l.Cantidad}
                    WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t}");
@@ -109,15 +135,66 @@ public class RecepcionesController : ControllerBase
             });
         }
 
-        _db.Recepciones.Add(recepcion);
+        r.Estado = EstadoDocumento.Confirmado;
+        r.FechaConfirmacion = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
 
-        return CreatedAtAction(nameof(Obtener), new { id = recepcion.Id },
-            new RecepcionDetalleDto(
-                recepcion.Id, recepcion.Proveedor, recepcion.Observaciones, recepcion.Fecha,
-                recepcion.Lineas.Sum(l => l.Cantidad * l.CostoUnitario),
-                recepcion.Lineas.Select(l => new RecepcionLineaDto(
-                    l.ProductoId, null, l.Cantidad, l.CostoUnitario)).ToList()));
+        return Ok(ToDetalle(r));
     }
+
+    /// <summary>Anula la recepción. Si estaba confirmada, revierte el stock sumado.</summary>
+    [HttpPost("{id:int}/anular")]
+    public async Task<ActionResult<RecepcionDetalleDto>> Anular(int id)
+    {
+        var t = _tenant.GetTenantId();
+        var r = await _db.Recepciones
+            .Include(x => x.Lineas).ThenInclude(l => l.Producto)
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
+        if (r is null) return NotFound();
+        if (r.Estado == EstadoDocumento.Anulado)
+            return BadRequest("La recepción ya está anulada.");
+
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        // Si estaba confirmada, revertir el stock que había sumado.
+        if (r.Estado == EstadoDocumento.Confirmado)
+        {
+            foreach (var l in r.Lineas)
+            {
+                // Guardia: no permitir anular si el stock ya se consumió (quedaría negativo).
+                var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
+                    $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {l.Cantidad}
+                       WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t} AND ""Stock"" >= {l.Cantidad}");
+                if (filas == 0)
+                {
+                    await tx.RollbackAsync();
+                    var nombre = l.Producto?.Nombre ?? $"#{l.ProductoId}";
+                    return BadRequest($"No se puede anular: el stock de \"{nombre}\" ya fue despachado.");
+                }
+
+                _db.MovimientosStock.Add(new MovimientoStock
+                {
+                    ProductoId = l.ProductoId,
+                    Tipo = TipoMovimiento.Salida,
+                    Cantidad = l.Cantidad,
+                    Fecha = DateTime.UtcNow,
+                    TenantId = t,
+                });
+            }
+        }
+
+        r.Estado = EstadoDocumento.Anulado;
+        r.FechaAnulacion = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        return Ok(ToDetalle(r));
+    }
+
+    private static RecepcionDetalleDto ToDetalle(Recepcion r) => new(
+        r.Id, r.Numero, r.Proveedor, r.Observaciones, r.Fecha, r.Estado,
+        r.Lineas.Sum(l => l.Cantidad * l.CostoUnitario),
+        r.Lineas.Select(l => new RecepcionLineaDto(
+            l.ProductoId, l.Producto?.Nombre, l.Cantidad, l.CostoUnitario)).ToList());
 }

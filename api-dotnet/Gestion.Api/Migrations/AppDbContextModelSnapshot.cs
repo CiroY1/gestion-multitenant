@@ -102,6 +102,33 @@ namespace Gestion.Api.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Consecutivo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UltimoNumero")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "TipoDocumento")
+                        .IsUnique();
+
+                    b.ToTable("Consecutivos");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
                     b.Property<int>("Id")
@@ -181,8 +208,21 @@ namespace Gestion.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Observaciones")
                         .HasColumnType("text");
@@ -198,6 +238,8 @@ namespace Gestion.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Numero");
 
                     b.ToTable("Recepciones");
                 });
@@ -298,8 +340,21 @@ namespace Gestion.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Observaciones")
                         .HasColumnType("text");
@@ -311,6 +366,8 @@ namespace Gestion.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Numero");
 
                     b.ToTable("Remisiones");
                 });
