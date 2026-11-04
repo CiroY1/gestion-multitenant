@@ -15,8 +15,10 @@ import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
   withFetch,
+  withInterceptors,
   withInterceptorsFromDi,
 } from '@angular/common/http'
+import { authTokenInterceptor } from './core/interceptors/auth-token.interceptor'
 import { provideStore } from '@ngrx/store'
 import { provideStoreDevtools } from '@ngrx/store-devtools'
 import { routes } from './app.routes'
@@ -49,7 +51,11 @@ export const appConfig: ApplicationConfig = {
     provideStore(rootReducer, { metaReducers: [localStorageSyncReducer] }),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     provideEffects(AuthenticationEffects, CalendarEffects),
-    provideHttpClient(withFetch(), withInterceptorsFromDi()),
+    provideHttpClient(
+      withFetch(),
+      withInterceptorsFromDi(),
+      withInterceptors([authTokenInterceptor])
+    ),
     importProvidersFrom(BrowserAnimationsModule, BrowserModule),
     provideToastr({}),
   ],

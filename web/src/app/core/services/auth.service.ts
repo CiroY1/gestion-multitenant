@@ -1,48 +1,96 @@
 import { Injectable, inject } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { map } from 'rxjs/operators'
-
 import { CookieService } from 'ngx-cookie-service'
-import type { User } from '@/app/helpers/fake-backend'
+import { environment } from '@/environments/environment'
+
+interface LoginResponse {
+  token: string
+  expira: string
+  usuario: { email: string; rol: string; empresa: string; tenantId: string }
+  modulos: { inventario: boolean; spa: boolean }
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
-  user: User | null = null
+  usuario: LoginResponse['usuario'] | null = null
+  modulos: LoginResponse['modulos'] | null = null
 
   public readonly authSessionKey = '_REBACK_AUTH_SESSION_KEY_'
+  private readonly userKey = '_REBACK_USER_'
   private cookieService = inject(CookieService)
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.restore()
+  }
 
   login(email: string, password: string) {
-    return this.http.post<User>(`/api/login`, { email, password }).pipe(
-      map((user) => {
-        // login successful if there's a jwt token in the response
-        if (user && user.token) {
-          this.user = user
-          // store user details and jwt in session
-          this.saveSession(user.token)
-        }
-        return user
-      })
-    )
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { email, password })
+      .pipe(
+        map((res) => {
+          // login correcto si la respuesta trae token
+          if (res && res.token) {
+            this.saveSession(res.token)
+            this.usuario = res.usuario
+            this.modulos = res.modulos
+            try {
+              localStorage.setItem(
+                this.userKey,
+                JSON.stringify({ usuario: res.usuario, modulos: res.modulos })
+              )
+            } catch {}
+          }
+          return res
+        })
+      )
   }
 
   logout(): void {
-    // remove user from cookie to log user out
     this.removeSession()
-    this.user = null
+    this.usuario = null
+    this.modulos = null
+    try {
+      localStorage.removeItem(this.userKey)
+    } catch {}
   }
 
+  private readonly tokenKey = '_REBACK_TOKEN_'
+
   get session(): string {
+    // localStorage es por-origen (visible en todas las rutas); el cookie es respaldo.
+    try {
+      const t = localStorage.getItem(this.tokenKey)
+      if (t) return t
+    } catch {}
     return this.cookieService.get(this.authSessionKey)
   }
 
   saveSession(token: string): void {
-    this.cookieService.set(this.authSessionKey, token)
+    try {
+      localStorage.setItem(this.tokenKey, token)
+    } catch {}
+    this.cookieService.set(this.authSessionKey, token, {
+      path: '/',
+      sameSite: 'Lax',
+    })
   }
 
   removeSession(): void {
-    this.cookieService.delete(this.authSessionKey)
+    try {
+      localStorage.removeItem(this.tokenKey)
+    } catch {}
+    this.cookieService.delete(this.authSessionKey, '/')
+  }
+
+  private restore(): void {
+    try {
+      const raw = localStorage.getItem(this.userKey)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        this.usuario = parsed.usuario ?? null
+        this.modulos = parsed.modulos ?? null
+      }
+    } catch {}
   }
 }
