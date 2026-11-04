@@ -173,6 +173,65 @@ namespace Gestion.Api.Migrations
                     b.ToTable("Productos");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Observaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Proveedor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Recepciones");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.RecepcionLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecepcionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("RecepcionId");
+
+                    b.ToTable("RecepcionLineas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Auth.Usuario", b =>
                 {
                     b.HasOne("Gestion.Api.Auth.Empresa", "Empresa")
@@ -206,6 +265,25 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Categoria");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.RecepcionLinea", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Recepcion", "Recepcion")
+                        .WithMany("Lineas")
+                        .HasForeignKey("RecepcionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Recepcion");
+                });
+
             modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
                 {
                     b.Navigation("Usuarios");
@@ -219,6 +297,11 @@ namespace Gestion.Api.Migrations
             modelBuilder.Entity("Gestion.Api.Inventario.Producto", b =>
                 {
                     b.Navigation("Movimientos");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>
+                {
+                    b.Navigation("Lineas");
                 });
 #pragma warning restore 612, 618
         }

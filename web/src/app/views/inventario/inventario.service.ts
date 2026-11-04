@@ -26,6 +26,15 @@ export interface Movimiento {
   fecha: string
 }
 
+export interface Recepcion {
+  id: number
+  proveedor: string
+  observaciones?: string
+  fecha: string
+  total: number
+  items: number
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
   private http = inject(HttpClient)
@@ -55,6 +64,18 @@ export class InventarioService {
 
   eliminarProducto(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/productos/${id}`)
+  }
+
+  getRecepciones(): Observable<Recepcion[]> {
+    return this.http.get<Recepcion[]>(`${this.base}/recepciones`)
+  }
+
+  crearRecepcion(dto: {
+    proveedor: string
+    observaciones?: string
+    lineas: { productoId: number; cantidad: number; costoUnitario: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/recepciones`, dto)
   }
 
   registrarMovimiento(dto: {
