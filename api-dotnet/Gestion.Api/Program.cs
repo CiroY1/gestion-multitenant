@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
 using DotNetEnv;
+using Gestion.Api.Common;
 using Gestion.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,9 +25,15 @@ if (string.IsNullOrWhiteSpace(databaseUrl))
 var connectionString = NeonConnection.ToNpgsql(databaseUrl);
 
 // Servicios.
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+
+// Provee el tenant (empresa) actual. Hoy es un demo fijo; con el login/JWT
+// se cambiará esta única línea por una implementación que lea el token.
+builder.Services.AddScoped<ITenantProvider, DemoTenantProvider>();
 
 var app = builder.Build();
 
@@ -32,6 +41,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(); // UI para probar la API en /scalar/v1
 }
 
 app.UseHttpsRedirection();
