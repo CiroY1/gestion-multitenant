@@ -12,6 +12,11 @@ export const VIEW_ROUTES: Route[] = [
       ),
   },
   {
+    path: 'terceros',
+    loadChildren: () =>
+      import('./terceros/terceros.route').then((mod) => mod.TERCEROS_ROUTES),
+  },
+  {
     path: 'pages',
     loadChildren: () =>
       import('./pages/pages.route').then((mod) => mod.PAGES_ROUTES),
