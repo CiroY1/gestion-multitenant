@@ -1,0 +1,33 @@
+//
+// pagination.scss
+//
+.page-link {
+    i {
+        vertical-align: middle;
+    }
+}
+
+// Pagination rounded (Custom)
+.pagination-rounded {
+    .page-link {
+        border-radius: 30px !important;
+        margin: 0 3px;
+        border: none;
+        display: inline;
+    }
+}
+
+/* Normal pagination only */
+.pagination:not(.pagination-rounded) .page-item .page-link {
+    border-radius: 0;
+}
+
+.pagination:not(.pagination-rounded) .page-item:first-child .page-link {
+    border-top-left-radius: 5.6px;
+    border-bottom-left-radius: 5.6px;
+}
+
+.pagination:not(.pagination-rounded) .page-item:last-child .page-link {
+    border-top-right-radius: 5.6px;
+    border-bottom-right-radius: 5.6px;
+}

@@ -1,0 +1,37 @@
+# Dependencias
+node_modules/
+web/node_modules/
+api-nest/node_modules/
+
+# Builds
+dist/
+web/dist/
+web/.angular/
+api-nest/dist/
+
+# .NET
+[Bb]in/
+[Oo]bj/
+*.user
+
+# Entornos y secretos
+.env
+*.env
+!*.env.example
+
+# Editores / IDE
+.idea/
+.vscode/
+*.suo
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+.neon
+.env.local
+
+# Documentación original de la plantilla (solo referencia, no va al repo)
+Reback-Angular_v1.0/
+
+# Artefacto de planeación
+plan.html
