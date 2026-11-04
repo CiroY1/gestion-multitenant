@@ -1,7 +1,7 @@
 import { LogoBox } from '@/app/components/logo-box'
 import { SocialBtn } from '@/app/components/social-btn/social-btn'
-import { login } from '@/app/store/authentication/authentication.actions'
-import { Component, inject, type OnInit } from '@angular/core'
+import { AuthenticationService } from '@/app/core/services/auth.service'
+import { Component, inject, signal, type OnInit } from '@angular/core'
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -9,28 +9,25 @@ import {
   Validators,
   type UntypedFormGroup,
 } from '@angular/forms'
-import { RouterModule } from '@angular/router'
-import { Store } from '@ngrx/store'
+import { ActivatedRoute, Router, RouterModule } from '@angular/router'
 
 @Component({
   selector: 'app-signin',
   standalone: true,
-  imports: [
-    SocialBtn,
-    LogoBox,
-    FormsModule,
-    ReactiveFormsModule,
-    RouterModule,
-  ],
+  imports: [SocialBtn, LogoBox, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './signin.html',
   styles: ``,
 })
 export class Signin implements OnInit {
   signInForm!: UntypedFormGroup
-  submitted: boolean = false
+  submitted = false
+  cargando = signal(false)
+  error = signal<string | null>(null)
 
   public fb = inject(UntypedFormBuilder)
-  public store = inject(Store)
+  private auth = inject(AuthenticationService)
+  private router = inject(Router)
+  private route = inject(ActivatedRoute)
 
   ngOnInit(): void {
     this.signInForm = this.fb.group({
@@ -45,12 +42,21 @@ export class Signin implements OnInit {
 
   login() {
     this.submitted = true
-    if (this.signInForm.valid) {
-      const email = this.formValues['email'].value // Get the username from the form
-      const password = this.formValues['password'].value // Get the password from the form
+    this.error.set(null)
+    if (this.signInForm.invalid) return
 
-      // Login Api
-      this.store.dispatch(login({ email: email, password: password }))
-    }
+    this.cargando.set(true)
+    const { email, password } = this.signInForm.value
+    this.auth.login(email, password).subscribe({
+      next: () => {
+        this.cargando.set(false)
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/'
+        this.router.navigateByUrl(returnUrl)
+      },
+      error: () => {
+        this.cargando.set(false)
+        this.error.set('Correo o contraseña incorrectos.')
+      },
+    })
   }
 }
