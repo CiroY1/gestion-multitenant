@@ -25,6 +25,10 @@
                 Enter your email address and password to access admin panel.
               </p>
 
+              @if (error()) {
+                <div class="alert alert-danger text-center py-2">{{ error() }}</div>
+              }
+
               <div class="row justify-content-center">
                 <div class="col-12 col-md-8">
                   <form
@@ -76,7 +80,14 @@
                     </div>
 
                     <div class="mb-1 text-center d-grid">
-                      <button class="btn btn-primary" type="submit">
+                      <button
+                        class="btn btn-primary"
+                        type="submit"
+                        [disabled]="cargando()"
+                      >
+                        @if (cargando()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
                         Sign In
                       </button>
                     </div>

@@ -53,6 +53,10 @@ export class InventarioService {
     return this.http.post<Producto>(`${this.base}/productos`, dto)
   }
 
+  eliminarProducto(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/productos/${id}`)
+  }
+
   registrarMovimiento(dto: {
     productoId: number
     tipo: 'Entrada' | 'Salida'
