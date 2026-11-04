@@ -159,11 +159,23 @@
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="6" class="text-center text-muted py-4">Cargando productos…</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando productos…
+              </td></tr>
             } @else if (error()) {
               <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (filtrados().length === 0) {
-              <tr><td colspan="6" class="text-center text-muted py-4">No hay productos que coincidan.</td></tr>
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-light text-muted rounded-circle fs-24">
+                      <i class="bx bx-box"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Sin resultados</h5>
+                  <p class="text-muted mb-0">No hay productos que coincidan con tu búsqueda.</p>
+                </div>
+              </td></tr>
             } @else {
               @for (p of filtrados(); track p.id) {
                 <tr>
