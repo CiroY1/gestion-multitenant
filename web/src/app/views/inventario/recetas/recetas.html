@@ -1,0 +1,137 @@
+<app-page-title [title]="'Inventario'" [subtitle]="'Recetas'" />
+
+@if (exito()) {
+  <div class="alert alert-success alert-dismissible">
+    {{ exito() }}
+    <button type="button" class="btn-close" (click)="exito.set(null)"></button>
+  </div>
+}
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div>
+            <h5 class="mb-0">Recetas de producción</h5>
+            <small class="text-muted">Al producir, se restan los insumos y se suma el producto terminado</small>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirForm()">
+              <i class="bx bx-plus me-1"></i>Nueva receta
+            </button>
+          </div>
+        </div>
+
+        @if (mostrarForm()) {
+          <div class="mt-3 p-3 rounded bg-light-subtle border">
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Nombre de la receta</label>
+                <input class="form-control" [(ngModel)]="nombre" placeholder="Ej: Combo almuerzo" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Producto terminado</label>
+                <select class="form-select" [(ngModel)]="productoFinalId">
+                  @for (p of productos(); track p.id) {
+                    <option [ngValue]="p.id">{{ p.nombre }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <label class="form-label">Insumos (por cada unidad producida)</label>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-2">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Insumo</th>
+                    <th style="width: 140px">Cantidad</th>
+                    <th style="width: 48px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ing of ingredientes; track $index) {
+                    <tr>
+                      <td>
+                        <select class="form-select" [(ngModel)]="ing.productoId">
+                          @for (p of productos(); track p.id) {
+                            <option [ngValue]="p.id">{{ p.nombre }} (stock: {{ p.stock }})</option>
+                          }
+                        </select>
+                      </td>
+                      <td><input type="number" class="form-control" [(ngModel)]="ing.cantidad" min="1" /></td>
+                      <td>
+                        <button class="btn btn-sm btn-soft-danger" (click)="quitarIng($index)">
+                          <i class="bx bx-x"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <button class="btn btn-sm btn-soft-primary" (click)="agregarIng()">
+              <i class="bx bx-plus me-1"></i>Agregar insumo
+            </button>
+            <div class="mt-3 d-flex gap-2 justify-content-end">
+              <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+              <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
+                @if (guardando()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                Guardar receta
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>#</th>
+              <th>Receta</th>
+              <th>Producto terminado</th>
+              <th class="text-center">Insumos</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="5" class="text-center text-muted py-4">Cargando…</td></tr>
+            } @else if (error()) {
+              <tr><td colspan="5" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (recetas().length === 0) {
+              <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay recetas. Crea la primera con "Nueva receta".</td></tr>
+            } @else {
+              @for (r of recetas(); track r.id) {
+                <tr>
+                  <td class="text-muted">{{ r.id }}</td>
+                  <td class="fw-medium">{{ r.nombre }}</td>
+                  <td><span class="badge bg-light text-dark">{{ r.productoFinal }}</span></td>
+                  <td class="text-center">{{ r.ingredientes }}</td>
+                  <td class="text-center">
+                    <button class="btn btn-sm btn-soft-success" (click)="producir(r)">
+                      <i class="bx bx-cog me-1"></i>Producir
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

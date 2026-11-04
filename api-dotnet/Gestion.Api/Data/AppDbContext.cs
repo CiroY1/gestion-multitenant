@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
     public DbSet<RecepcionLinea> RecepcionLineas => Set<RecepcionLinea>();
     public DbSet<Remision> Remisiones => Set<Remision>();
     public DbSet<RemisionLinea> RemisionLineas => Set<RemisionLinea>();
+    public DbSet<Receta> Recetas => Set<Receta>();
+    public DbSet<RecetaIngrediente> RecetaIngredientes => Set<RecetaIngrediente>();
 
     // Auth / multi-tenant
     public DbSet<Empresa> Empresas => Set<Empresa>();
@@ -51,6 +53,18 @@ public class AppDbContext : DbContext
             .WithOne(l => l.Remision!)
             .HasForeignKey(l => l.RemisionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Recetas
+        modelBuilder.Entity<Receta>().HasIndex(r => r.TenantId);
+        modelBuilder.Entity<Receta>()
+            .HasMany(r => r.Ingredientes).WithOne(i => i.Receta!)
+            .HasForeignKey(i => i.RecetaId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Receta>()
+            .HasOne(r => r.ProductoFinal).WithMany()
+            .HasForeignKey(r => r.ProductoFinalId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RecetaIngrediente>()
+            .HasOne(i => i.Producto).WithMany()
+            .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
 
         // Proteger el historial: impedir borrar productos/categorías referenciados.
         modelBuilder.Entity<MovimientoStock>()

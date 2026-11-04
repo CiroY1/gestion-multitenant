@@ -2,6 +2,7 @@ import type { Route } from '@angular/router'
 import { Productos } from './productos/productos'
 import { Recepciones } from './recepciones/recepciones'
 import { Remisiones } from './remisiones/remisiones'
+import { Recetas } from './recetas/recetas'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -18,5 +19,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'remisiones',
     component: Remisiones,
     data: { title: 'Remisiones' },
+  },
+  {
+    path: 'recetas',
+    component: Recetas,
+    data: { title: 'Recetas' },
   },
 ]

@@ -232,6 +232,60 @@ namespace Gestion.Api.Migrations
                     b.ToTable("RecepcionLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Receta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProductoFinalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoFinalId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Recetas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.RecetaIngrediente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecetaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("RecetaId");
+
+                    b.ToTable("RecetaIngredientes");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
                 {
                     b.Property<int>("Id")
@@ -339,6 +393,36 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Recepcion");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Receta", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "ProductoFinal")
+                        .WithMany()
+                        .HasForeignKey("ProductoFinalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProductoFinal");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.RecetaIngrediente", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Receta", "Receta")
+                        .WithMany("Ingredientes")
+                        .HasForeignKey("RecetaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Receta");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.RemisionLinea", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
@@ -376,6 +460,11 @@ namespace Gestion.Api.Migrations
             modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>
                 {
                     b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Receta", b =>
+                {
+                    b.Navigation("Ingredientes");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
