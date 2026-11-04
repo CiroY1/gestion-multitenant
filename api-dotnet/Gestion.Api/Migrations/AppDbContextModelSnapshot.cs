@@ -22,6 +22,63 @@ namespace Gestion.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ModuloInventario")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ModuloSpa")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Empresas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Auth.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmpresaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TelefonoCifrado")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("EmpresaId");
+
+                    b.ToTable("Usuarios");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -116,6 +173,17 @@ namespace Gestion.Api.Migrations
                     b.ToTable("Productos");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Auth.Usuario", b =>
+                {
+                    b.HasOne("Gestion.Api.Auth.Empresa", "Empresa")
+                        .WithMany("Usuarios")
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
@@ -136,6 +204,11 @@ namespace Gestion.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
+                {
+                    b.Navigation("Usuarios");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Categoria", b =>
