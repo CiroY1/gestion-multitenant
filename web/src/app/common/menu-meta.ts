@@ -81,6 +81,26 @@ export const MENU: MenuItem[] = [
     ],
   },
   {
+    key: 'terceros',
+    icon: 'iconamoon:profile-duotone',
+    label: 'Terceros',
+    collapsed: true,
+    subMenu: [
+      {
+        key: 'terceros-proveedores',
+        label: 'Proveedores',
+        link: '/terceros/proveedores',
+        parentKey: 'terceros',
+      },
+      {
+        key: 'terceros-clientes',
+        label: 'Clientes',
+        link: '/terceros/clientes',
+        parentKey: 'terceros',
+      },
+    ],
+  },
+  {
     key: 'apps',
     label: 'APPS',
     isTitle: true,

@@ -1,5 +1,6 @@
 using Gestion.Api.Auth;
 using Gestion.Api.Inventario;
+using Gestion.Api.Terceros;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gestion.Api.Data;
@@ -24,6 +25,10 @@ public class AppDbContext : DbContext
     public DbSet<RemisionLinea> RemisionLineas => Set<RemisionLinea>();
     public DbSet<Receta> Recetas => Set<Receta>();
     public DbSet<RecetaIngrediente> RecetaIngredientes => Set<RecetaIngrediente>();
+
+    // Terceros
+    public DbSet<Proveedor> Proveedores => Set<Proveedor>();
+    public DbSet<Cliente> Clientes => Set<Cliente>();
 
     // Auth / multi-tenant
     public DbSet<Empresa> Empresas => Set<Empresa>();
@@ -65,6 +70,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RecetaIngrediente>()
             .HasOne(i => i.Producto).WithMany()
             .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Terceros
+        modelBuilder.Entity<Proveedor>().HasIndex(p => p.TenantId);
+        modelBuilder.Entity<Cliente>().HasIndex(c => c.TenantId);
 
         // Proteger el historial: impedir borrar productos/categorías referenciados.
         modelBuilder.Entity<MovimientoStock>()
