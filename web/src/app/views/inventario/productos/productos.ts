@@ -21,6 +21,7 @@ export class Productos implements OnInit {
   categorias = signal<Categoria[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
+  aviso = signal<string | null>(null)
   busqueda = signal('')
 
   // Formulario de creación.
@@ -93,15 +94,26 @@ export class Productos implements OnInit {
         this.mostrarForm.set(false)
         this.cargar()
       },
-      error: () => this.guardando.set(false),
+      error: (e) => {
+        this.guardando.set(false)
+        this.aviso.set(
+          typeof e?.error === 'string' ? e.error : 'No se pudo crear el producto.'
+        )
+      },
     })
   }
 
   eliminar(p: Producto): void {
     if (!confirm(`¿Eliminar "${p.nombre}"?`)) return
+    this.aviso.set(null)
     this.inv.eliminarProducto(p.id).subscribe({
       next: () => this.cargar(),
-      error: () => {},
+      error: (e) =>
+        this.aviso.set(
+          typeof e?.error === 'string'
+            ? e.error
+            : 'No se pudo eliminar el producto.'
+        ),
     })
   }
 }

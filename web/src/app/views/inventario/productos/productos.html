@@ -1,5 +1,12 @@
 <app-page-title [title]="'Inventario'" [subtitle]="'Productos'" />
 
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
 <!-- Tarjetas de métricas -->
 <div class="row">
   <div class="col-md-6 col-xl-3">
@@ -110,7 +117,7 @@
                 <label class="form-label">Categoría</label>
                 <select class="form-select" [(ngModel)]="nuevo.categoriaId">
                   @for (c of categorias(); track c.id) {
-                    <option [value]="c.id">{{ c.nombre }}</option>
+                    <option [ngValue]="c.id">{{ c.nombre }}</option>
                   }
                 </select>
               </div>

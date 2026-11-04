@@ -46,11 +46,20 @@ public class MovimientosController : ControllerBase
             .FirstOrDefaultAsync(p => p.Id == dto.ProductoId && p.TenantId == t);
         if (producto is null) return NotFound("El producto no existe.");
 
-        if (dto.Tipo == TipoMovimiento.Salida && producto.Stock < dto.Cantidad)
-            return BadRequest($"Stock insuficiente. Disponible: {producto.Stock}.");
+        await using var tx = await _db.Database.BeginTransactionAsync();
 
-        // Actualiza el stock del producto según el tipo de movimiento.
-        producto.Stock += dto.Tipo == TipoMovimiento.Entrada ? dto.Cantidad : -dto.Cantidad;
+        // Actualización atómica del stock: la BD valida y modifica en una sola
+        // operación, evitando condiciones de carrera (sobreventa / stock negativo).
+        var filas = dto.Tipo == TipoMovimiento.Salida
+            ? await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {dto.Cantidad}
+                   WHERE ""Id"" = {producto.Id} AND ""TenantId"" = {t} AND ""Stock"" >= {dto.Cantidad}")
+            : await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {dto.Cantidad}
+                   WHERE ""Id"" = {producto.Id} AND ""TenantId"" = {t}");
+
+        if (filas == 0)
+            return BadRequest($"Stock insuficiente. Disponible: {producto.Stock}.");
 
         var movimiento = new MovimientoStock
         {
@@ -58,10 +67,11 @@ public class MovimientosController : ControllerBase
             Tipo = dto.Tipo,
             Cantidad = dto.Cantidad,
             Fecha = DateTime.UtcNow,
-            TenantId = t
+            TenantId = t,
         };
         _db.MovimientosStock.Add(movimiento);
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return Ok(new MovimientoDto(movimiento.Id, movimiento.ProductoId,
             movimiento.Tipo.ToString(), movimiento.Cantidad, movimiento.Fecha));

@@ -51,17 +51,25 @@ public class ProductosController : ControllerBase
     public async Task<ActionResult<ProductoDto>> Crear(CrearProductoDto dto)
     {
         var t = _tenant.GetTenantId();
+
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            return BadRequest("El nombre es obligatorio.");
+        if (dto.Precio < 0)
+            return BadRequest("El precio no puede ser negativo.");
+        if (dto.StockInicial < 0)
+            return BadRequest("El stock inicial no puede ser negativo.");
+
         var categoriaOk = await _db.Categorias.AnyAsync(c => c.Id == dto.CategoriaId && c.TenantId == t);
         if (!categoriaOk) return BadRequest("La categoría indicada no existe.");
 
         var producto = new Producto
         {
-            Nombre = dto.Nombre,
+            Nombre = dto.Nombre.Trim(),
             Descripcion = dto.Descripcion,
             Precio = dto.Precio,
             Stock = dto.StockInicial,
             CategoriaId = dto.CategoriaId,
-            TenantId = t
+            TenantId = t,
         };
         _db.Productos.Add(producto);
         await _db.SaveChangesAsync();
@@ -74,13 +82,19 @@ public class ProductosController : ControllerBase
     public async Task<IActionResult> Actualizar(int id, ActualizarProductoDto dto)
     {
         var t = _tenant.GetTenantId();
+
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            return BadRequest("El nombre es obligatorio.");
+        if (dto.Precio < 0)
+            return BadRequest("El precio no puede ser negativo.");
+
         var p = await _db.Productos.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
         if (p is null) return NotFound();
 
         var categoriaOk = await _db.Categorias.AnyAsync(c => c.Id == dto.CategoriaId && c.TenantId == t);
         if (!categoriaOk) return BadRequest("La categoría indicada no existe.");
 
-        p.Nombre = dto.Nombre;
+        p.Nombre = dto.Nombre.Trim();
         p.Descripcion = dto.Descripcion;
         p.Precio = dto.Precio;
         p.CategoriaId = dto.CategoriaId;
@@ -95,6 +109,15 @@ public class ProductosController : ControllerBase
         var t = _tenant.GetTenantId();
         var p = await _db.Productos.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
         if (p is null) return NotFound();
+
+        // Protege el historial: no se elimina un producto con movimientos o documentos.
+        var tieneHistorial =
+            await _db.MovimientosStock.AnyAsync(m => m.ProductoId == id && m.TenantId == t) ||
+            await _db.RecepcionLineas.AnyAsync(l => l.ProductoId == id) ||
+            await _db.RemisionLineas.AnyAsync(l => l.ProductoId == id);
+        if (tieneHistorial)
+            return BadRequest("No se puede eliminar: el producto tiene movimientos o documentos asociados.");
+
         _db.Productos.Remove(p);
         await _db.SaveChangesAsync();
         return NoContent();

@@ -89,27 +89,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Endpoint de salud: prueba la conexión real contra Neon Postgres.
+// Endpoint de salud: estado genérico, sin exponer versión ni detalles de error.
 app.MapGet("/health/db", async (AppDbContext db) =>
 {
     try
     {
-        await db.Database.OpenConnectionAsync();
-        await using var cmd = db.Database.GetDbConnection().CreateCommand();
-        cmd.CommandText = "SELECT version();";
-        var version = (string?)await cmd.ExecuteScalarAsync();
-        await db.Database.CloseConnectionAsync();
-
-        return Results.Ok(new
-        {
-            status = "ok",
-            database = "neon-postgres",
-            version
-        });
+        var ok = await db.Database.CanConnectAsync();
+        return ok
+            ? Results.Ok(new { status = "ok" })
+            : Results.Json(new { status = "degraded" }, statusCode: 503);
     }
-    catch (Exception ex)
+    catch
     {
-        return Results.Problem("Error de conexión a la base de datos: " + ex.Message);
+        return Results.Json(new { status = "degraded" }, statusCode: 503);
     }
 });
 
