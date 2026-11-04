@@ -1,11 +1,13 @@
 using Gestion.Api.Common;
 using Gestion.Api.Data;
 using Gestion.Api.Inventario.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gestion.Api.Inventario;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProductosController : ControllerBase

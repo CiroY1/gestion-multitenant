@@ -1,8 +1,12 @@
+using System.Text;
 using System.Text.Json.Serialization;
 using DotNetEnv;
 using Gestion.Api.Common;
 using Gestion.Api.Data;
+using Gestion.Api.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,14 +19,13 @@ if (File.Exists(envPath))
 }
 
 // Conexión a Neon Postgres (pooled = tráfico normal de la app).
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (string.IsNullOrWhiteSpace(databaseUrl))
-{
-    throw new InvalidOperationException(
-        "Falta la variable DATABASE_URL. Verifica que exista .env.local en la raíz del proyecto.");
-}
-
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? throw new InvalidOperationException("Falta DATABASE_URL. Verifica .env.local.");
 var connectionString = NeonConnection.ToNpgsql(databaseUrl);
+
+// Secreto para validar los JWT (el mismo que JwtService usa para firmarlos).
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? throw new InvalidOperationException("Falta JWT_SECRET. Verifica .env.local.");
 
 // Servicios.
 builder.Services
@@ -31,9 +34,30 @@ builder.Services
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
-// Provee el tenant (empresa) actual. Hoy es un demo fijo; con el login/JWT
-// se cambiará esta única línea por una implementación que lea el token.
-builder.Services.AddScoped<ITenantProvider, DemoTenantProvider>();
+// Motor de seguridad + identidad.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<EncryptionService>();
+builder.Services.AddScoped<ITenantProvider, JwtTenantProvider>();
+
+// Validación de JWT (HS256 con el secreto compartido).
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = JwtService.Issuer,
+            ValidateAudience = true,
+            ValidAudience = JwtService.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+        };
+    });
 
 // CORS: permitir que el frontend Angular (localhost:4200) consuma la API.
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
@@ -42,6 +66,15 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
           .AllowAnyMethod()));
 
 var app = builder.Build();
+
+// Seed de datos demo (solo desarrollo): empresa "demo" + usuario admin.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    await Gestion.Api.Data.DbSeeder.SeedAsync(
+        scope.ServiceProvider.GetRequiredService<AppDbContext>(),
+        scope.ServiceProvider.GetRequiredService<Gestion.Api.Security.PasswordService>());
+}
 
 // Pipeline HTTP.
 if (app.Environment.IsDevelopment())
@@ -52,6 +85,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
