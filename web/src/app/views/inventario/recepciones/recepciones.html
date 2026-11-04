@@ -5,9 +5,16 @@
     <div class="card">
       <div class="card-body border-bottom">
         <div class="d-flex flex-wrap justify-content-between gap-2">
-          <div>
-            <h5 class="mb-0">Recepciones de mercancía</h5>
-            <small class="text-muted">Entradas de productos desde proveedores (suman stock)</small>
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-success-subtle text-success rounded fs-20">
+                <i class="bx bx-down-arrow-circle"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Recepciones de mercancía</h5>
+              <small class="text-muted">Entradas de productos desde proveedores (suman stock)</small>
+            </div>
           </div>
           <div class="d-flex gap-2">
             <button class="btn btn-soft-secondary" (click)="cargar()">
@@ -100,11 +107,23 @@
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="6" class="text-center text-muted py-4">Cargando…</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
             } @else if (error()) {
               <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (recepciones().length === 0) {
-              <tr><td colspan="6" class="text-center text-muted py-4">Aún no hay recepciones. Crea la primera con "Nueva recepción".</td></tr>
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-success-subtle text-success rounded-circle fs-24">
+                      <i class="bx bx-down-arrow-circle"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay recepciones</h5>
+                  <p class="text-muted mb-0">Crea la primera con "Nueva recepción".</p>
+                </div>
+              </td></tr>
             } @else {
               @for (r of recepciones(); track r.id) {
                 <tr>
@@ -112,14 +131,20 @@
                   <td>{{ r.fecha | date: 'short' }}</td>
                   <td class="fw-medium">{{ r.proveedor }}</td>
                   <td class="text-muted">{{ r.observaciones }}</td>
-                  <td class="text-center">{{ r.items }}</td>
-                  <td class="text-end">$ {{ r.total | number: '1.0-0' }}</td>
+                  <td class="text-center"><span class="badge bg-light text-dark">{{ r.items }}</span></td>
+                  <td class="text-end fw-semibold">$ {{ r.total | number: '1.0-0' }}</td>
                 </tr>
               }
             }
           </tbody>
         </table>
       </div>
+
+      @if (!cargando() && !error() && recepciones().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ recepciones().length }}</span> recepciones registradas
+        </div>
+      }
     </div>
   </div>
 </div>

@@ -18,9 +18,16 @@
     <div class="card">
       <div class="card-body border-bottom">
         <div class="d-flex flex-wrap justify-content-between gap-2">
-          <div>
-            <h5 class="mb-0">Recetas de producción</h5>
-            <small class="text-muted">Al producir, se restan los insumos y se suma el producto terminado</small>
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-20">
+                <i class="bx bx-dish"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Recetas de producción</h5>
+              <small class="text-muted">Al producir, se restan los insumos y se suma el producto terminado</small>
+            </div>
           </div>
           <div class="d-flex gap-2">
             <button class="btn btn-soft-secondary" (click)="cargar()">
@@ -109,18 +116,30 @@
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="5" class="text-center text-muted py-4">Cargando…</td></tr>
+              <tr><td colspan="5" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
             } @else if (error()) {
               <tr><td colspan="5" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (recetas().length === 0) {
-              <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay recetas. Crea la primera con "Nueva receta".</td></tr>
+              <tr><td colspan="5" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-primary-subtle text-primary rounded-circle fs-24">
+                      <i class="bx bx-dish"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay recetas</h5>
+                  <p class="text-muted mb-0">Crea la primera con "Nueva receta".</p>
+                </div>
+              </td></tr>
             } @else {
               @for (r of recetas(); track r.id) {
                 <tr>
                   <td class="text-muted">{{ r.id }}</td>
                   <td class="fw-medium">{{ r.nombre }}</td>
                   <td><span class="badge bg-light text-dark">{{ r.productoFinal }}</span></td>
-                  <td class="text-center">{{ r.ingredientes }}</td>
+                  <td class="text-center"><span class="badge bg-info-subtle text-info">{{ r.ingredientes }}</span></td>
                   <td class="text-center">
                     <button class="btn btn-sm btn-soft-success" (click)="producir(r)">
                       <i class="bx bx-cog me-1"></i>Producir
@@ -132,6 +151,12 @@
           </tbody>
         </table>
       </div>
+
+      @if (!cargando() && !error() && recetas().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ recetas().length }}</span> recetas registradas
+        </div>
+      }
     </div>
   </div>
 </div>
