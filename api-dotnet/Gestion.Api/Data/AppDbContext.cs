@@ -52,6 +52,20 @@ public class AppDbContext : DbContext
             .HasForeignKey(l => l.RemisionId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Proteger el historial: impedir borrar productos/categorías referenciados.
+        modelBuilder.Entity<MovimientoStock>()
+            .HasOne(m => m.Producto).WithMany(p => p.Movimientos)
+            .HasForeignKey(m => m.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RecepcionLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RemisionLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Producto>()
+            .HasOne(p => p.Categoria).WithMany(c => c.Productos)
+            .HasForeignKey(p => p.CategoriaId).OnDelete(DeleteBehavior.Restrict);
+
         // Empresa: el Id (tenantId) lo asigna la app, no es autogenerado.
         modelBuilder.Entity<Empresa>().Property(e => e.Id).ValueGeneratedNever();
 

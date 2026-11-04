@@ -55,8 +55,21 @@ public class RemisionesController : ControllerBase
     public async Task<ActionResult<RemisionDetalleDto>> Crear(CrearRemisionDto dto)
     {
         var t = _tenant.GetTenantId();
+
+        if (string.IsNullOrWhiteSpace(dto.Cliente))
+            return BadRequest("El cliente es obligatorio.");
         if (dto.Lineas is null || dto.Lineas.Count == 0)
             return BadRequest("La remisión debe tener al menos una línea.");
+        if (dto.Lineas.Any(l => l.Cantidad <= 0))
+            return BadRequest("Las cantidades deben ser mayores a 0.");
+
+        // Precarga de productos del tenant (evita N+1 y valida existencia).
+        var ids = dto.Lineas.Select(l => l.ProductoId).Distinct().ToList();
+        var productos = await _db.Productos
+            .Where(p => ids.Contains(p.Id) && p.TenantId == t)
+            .ToDictionaryAsync(p => p.Id, p => p.Nombre);
+        if (ids.Any(id => !productos.ContainsKey(id)))
+            return BadRequest("Uno o más productos no existen.");
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
@@ -70,30 +83,21 @@ public class RemisionesController : ControllerBase
 
         foreach (var l in dto.Lineas)
         {
-            if (l.Cantidad <= 0)
-                return BadRequest("Las cantidades deben ser mayores a 0.");
-
-            var producto = await _db.Productos
-                .FirstOrDefaultAsync(p => p.Id == l.ProductoId && p.TenantId == t);
-            if (producto is null)
-                return BadRequest($"El producto {l.ProductoId} no existe.");
-
-            // Valida que haya stock suficiente para la salida.
-            if (producto.Stock < l.Cantidad)
-                return BadRequest(
-                    $"Stock insuficiente de \"{producto.Nombre}\". Disponible: {producto.Stock}, solicitado: {l.Cantidad}.");
+            // Resta de stock atómica con guardia: si no hay suficiente, afecta 0 filas.
+            var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {l.Cantidad}
+                   WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t} AND ""Stock"" >= {l.Cantidad}");
+            if (filas == 0)
+                return BadRequest($"Stock insuficiente de \"{productos[l.ProductoId]}\".");
 
             remision.Lineas.Add(new RemisionLinea
             {
                 ProductoId = l.ProductoId,
                 Cantidad = l.Cantidad,
             });
-
-            // Resta stock y registra el movimiento de salida.
-            producto.Stock -= l.Cantidad;
             _db.MovimientosStock.Add(new MovimientoStock
             {
-                ProductoId = producto.Id,
+                ProductoId = l.ProductoId,
                 Tipo = TipoMovimiento.Salida,
                 Cantidad = l.Cantidad,
                 Fecha = DateTime.UtcNow,

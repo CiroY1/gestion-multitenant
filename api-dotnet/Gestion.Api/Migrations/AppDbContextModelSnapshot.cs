@@ -303,7 +303,7 @@ namespace Gestion.Api.Migrations
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany("Movimientos")
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Producto");
@@ -314,7 +314,7 @@ namespace Gestion.Api.Migrations
                     b.HasOne("Gestion.Api.Inventario.Categoria", "Categoria")
                         .WithMany("Productos")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Categoria");
@@ -325,7 +325,7 @@ namespace Gestion.Api.Migrations
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Gestion.Api.Inventario.Recepcion", "Recepcion")
@@ -344,7 +344,7 @@ namespace Gestion.Api.Migrations
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Gestion.Api.Inventario.Remision", "Remision")

@@ -68,6 +68,11 @@ public class CategoriasController : ControllerBase
         var t = _tenant.GetTenantId();
         var c = await _db.Categorias.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
         if (c is null) return NotFound();
+
+        // No se elimina una categoría con productos asociados.
+        if (await _db.Productos.AnyAsync(p => p.CategoriaId == id && p.TenantId == t))
+            return BadRequest("No se puede eliminar: la categoría tiene productos asociados.");
+
         _db.Categorias.Remove(c);
         await _db.SaveChangesAsync();
         return NoContent();
