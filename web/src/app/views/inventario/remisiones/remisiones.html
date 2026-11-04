@@ -1,5 +1,12 @@
 <app-page-title [title]="'Inventario'" [subtitle]="'Remisiones'" />
 
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
 <div class="row">
   <div class="col-12">
     <div class="card">
@@ -93,23 +100,25 @@
         <table class="table text-nowrap mb-0">
           <thead class="bg-light bg-opacity-50">
             <tr>
-              <th>#</th>
+              <th>N°</th>
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Observaciones</th>
               <th class="text-center">Ítems</th>
               <th class="text-end">Unidades</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="6" class="text-center text-muted py-5">
+              <tr><td colspan="8" class="text-center text-muted py-5">
                 <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
               </td></tr>
             } @else if (error()) {
-              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+              <tr><td colspan="8" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (remisiones().length === 0) {
-              <tr><td colspan="6" class="py-5">
+              <tr><td colspan="8" class="py-5">
                 <div class="text-center">
                   <div class="avatar-lg mx-auto mb-3">
                     <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-24">
@@ -123,12 +132,43 @@
             } @else {
               @for (r of remisiones(); track r.id) {
                 <tr>
-                  <td class="text-muted">{{ r.id }}</td>
+                  <td class="fw-semibold">{{ r.numero }}</td>
                   <td>{{ r.fecha | date: 'short' }}</td>
                   <td class="fw-medium">{{ r.cliente }}</td>
                   <td class="text-muted">{{ r.observaciones }}</td>
                   <td class="text-center"><span class="badge bg-light text-dark">{{ r.items }}</span></td>
                   <td class="text-end fw-semibold">{{ r.unidades }}</td>
+                  <td class="text-center">
+                    @switch (r.estado) {
+                      @case ('Borrador') {
+                        <span class="badge bg-warning-subtle text-warning">Borrador</span>
+                      }
+                      @case ('Confirmado') {
+                        <span class="badge bg-success-subtle text-success">Confirmado</span>
+                      }
+                      @case ('Anulado') {
+                        <span class="badge bg-danger-subtle text-danger">Anulado</span>
+                      }
+                    }
+                  </td>
+                  <td class="text-center text-nowrap">
+                    @if (procesando() === r.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      @if (r.estado === 'Borrador') {
+                        <button class="btn btn-sm btn-soft-success me-1" (click)="confirmar(r)" title="Confirmar">
+                          <i class="bx bx-check fs-16"></i>
+                        </button>
+                      }
+                      @if (r.estado !== 'Anulado') {
+                        <button class="btn btn-sm btn-soft-danger" (click)="anular(r)" title="Anular">
+                          <i class="bx bx-x-circle fs-16"></i>
+                        </button>
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    }
+                  </td>
                 </tr>
               }
             }

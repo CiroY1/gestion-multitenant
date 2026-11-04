@@ -30,6 +30,8 @@ export class Remisiones implements OnInit {
   mostrarForm = signal(false)
   guardando = signal(false)
   errorForm = signal<string | null>(null)
+  aviso = signal<string | null>(null)
+  procesando = signal<number | null>(null)
 
   cliente = ''
   observaciones = ''
@@ -93,11 +95,40 @@ export class Remisiones implements OnInit {
         error: (e) => {
           this.guardando.set(false)
           this.errorForm.set(
-            typeof e?.error === 'string'
-              ? e.error
-              : 'No se pudo registrar la remisión (¿stock insuficiente?).'
+            typeof e?.error === 'string' ? e.error : 'No se pudo registrar la remisión.'
           )
         },
       })
+  }
+
+  confirmar(r: Remision): void {
+    this.aviso.set(null)
+    this.procesando.set(r.id)
+    this.inv.confirmarRemision(r.id).subscribe({
+      next: () => {
+        this.procesando.set(null)
+        this.cargar()
+      },
+      error: (e) => {
+        this.procesando.set(null)
+        this.aviso.set(typeof e?.error === 'string' ? e.error : 'No se pudo confirmar.')
+      },
+    })
+  }
+
+  anular(r: Remision): void {
+    if (!confirm(`¿Anular ${r.numero}? Si estaba confirmada, se devolverá el stock.`)) return
+    this.aviso.set(null)
+    this.procesando.set(r.id)
+    this.inv.anularRemision(r.id).subscribe({
+      next: () => {
+        this.procesando.set(null)
+        this.cargar()
+      },
+      error: (e) => {
+        this.procesando.set(null)
+        this.aviso.set(typeof e?.error === 'string' ? e.error : 'No se pudo anular.')
+      },
+    })
   }
 }

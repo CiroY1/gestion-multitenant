@@ -27,9 +27,11 @@ export class Recepciones implements OnInit {
   productos = signal<Producto[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
+  aviso = signal<string | null>(null)
 
   mostrarForm = signal(false)
   guardando = signal(false)
+  procesando = signal<number | null>(null)
 
   proveedor = ''
   observaciones = ''
@@ -100,5 +102,36 @@ export class Recepciones implements OnInit {
         },
         error: () => this.guardando.set(false),
       })
+  }
+
+  confirmar(r: Recepcion): void {
+    this.aviso.set(null)
+    this.procesando.set(r.id)
+    this.inv.confirmarRecepcion(r.id).subscribe({
+      next: () => {
+        this.procesando.set(null)
+        this.cargar()
+      },
+      error: (e) => {
+        this.procesando.set(null)
+        this.aviso.set(typeof e?.error === 'string' ? e.error : 'No se pudo confirmar.')
+      },
+    })
+  }
+
+  anular(r: Recepcion): void {
+    if (!confirm(`¿Anular ${r.numero}? Si estaba confirmada, se revertirá el stock.`)) return
+    this.aviso.set(null)
+    this.procesando.set(r.id)
+    this.inv.anularRecepcion(r.id).subscribe({
+      next: () => {
+        this.procesando.set(null)
+        this.cargar()
+      },
+      error: (e) => {
+        this.procesando.set(null)
+        this.aviso.set(typeof e?.error === 'string' ? e.error : 'No se pudo anular.')
+      },
+    })
   }
 }

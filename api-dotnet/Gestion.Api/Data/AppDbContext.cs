@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<RemisionLinea> RemisionLineas => Set<RemisionLinea>();
     public DbSet<Receta> Recetas => Set<Receta>();
     public DbSet<RecetaIngrediente> RecetaIngredientes => Set<RecetaIngrediente>();
+    public DbSet<Consecutivo> Consecutivos => Set<Consecutivo>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -42,8 +43,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Producto>().HasIndex(p => p.TenantId);
         modelBuilder.Entity<MovimientoStock>().HasIndex(m => m.TenantId);
 
+        // Consecutivos: una secuencia por (empresa, tipo de documento).
+        modelBuilder.Entity<Consecutivo>()
+            .HasIndex(c => new { c.TenantId, c.TipoDocumento }).IsUnique();
+
         // Recepciones
         modelBuilder.Entity<Recepcion>().HasIndex(r => r.TenantId);
+        modelBuilder.Entity<Recepcion>().HasIndex(r => new { r.TenantId, r.Numero });
         modelBuilder.Entity<RecepcionLinea>().Property(l => l.CostoUnitario).HasPrecision(12, 2);
         modelBuilder.Entity<Recepcion>()
             .HasMany(r => r.Lineas)
@@ -53,6 +59,7 @@ public class AppDbContext : DbContext
 
         // Remisiones
         modelBuilder.Entity<Remision>().HasIndex(r => r.TenantId);
+        modelBuilder.Entity<Remision>().HasIndex(r => new { r.TenantId, r.Numero });
         modelBuilder.Entity<Remision>()
             .HasMany(r => r.Lineas)
             .WithOne(l => l.Remision!)

@@ -1,15 +1,26 @@
 namespace Gestion.Api.Inventario;
 
 /// <summary>
-/// Remisión (salida/despacho de mercancía a un cliente o destino).
-/// Al registrarse, resta stock de cada producto y genera movimientos de salida.
+/// Remisión (salida/despacho de mercancía a un cliente o destino). Se crea como
+/// borrador sin tocar el stock; al confirmarse resta stock y genera los
+/// movimientos de salida, y al anularse revierte ese efecto.
 /// </summary>
 public class Remision
 {
     public int Id { get; set; }
+
+    /// <summary>Número consecutivo del documento, p.ej. "REM-0001".</summary>
+    public string Numero { get; set; } = string.Empty;
+
     public string Cliente { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Estado del ciclo de vida: borrador, confirmado o anulado.</summary>
+    public EstadoDocumento Estado { get; set; } = EstadoDocumento.Borrador;
+
+    public DateTime? FechaConfirmacion { get; set; }
+    public DateTime? FechaAnulacion { get; set; }
 
     public string TenantId { get; set; } = string.Empty;
 
