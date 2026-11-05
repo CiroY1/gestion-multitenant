@@ -7,13 +7,20 @@ public record GuardarCategoriaDto(string Nombre);
 // --- Productos ---
 public record ProductoDto(
     int Id, string Nombre, string? Descripcion, decimal Precio, int Stock,
-    decimal CostoPromedio, int CategoriaId, string? Categoria);
+    decimal CostoPromedio, int CategoriaId, string? Categoria,
+    int? UnidadMedidaId, string? Unidad);
 
 public record CrearProductoDto(
-    string Nombre, string? Descripcion, decimal Precio, int StockInicial, int CategoriaId);
+    string Nombre, string? Descripcion, decimal Precio, int StockInicial, int CategoriaId,
+    int? UnidadMedidaId = null);
 
 public record ActualizarProductoDto(
-    string Nombre, string? Descripcion, decimal Precio, int CategoriaId);
+    string Nombre, string? Descripcion, decimal Precio, int CategoriaId,
+    int? UnidadMedidaId = null);
+
+// --- Unidades de medida ---
+public record UnidadMedidaDto(int Id, string Nombre, string Abreviatura);
+public record GuardarUnidadDto(string Nombre, string Abreviatura);
 
 // --- Movimientos de stock ---
 public record MovimientoDto(int Id, int ProductoId, string Tipo, int Cantidad, DateTime Fecha);

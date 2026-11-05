@@ -17,6 +17,14 @@ export interface Producto {
   costoPromedio: number
   categoriaId: number
   categoria?: string
+  unidadMedidaId?: number
+  unidad?: string
+}
+
+export interface UnidadMedida {
+  id: number
+  nombre: string
+  abreviatura: string
 }
 
 export interface KardexLinea {
@@ -251,8 +259,16 @@ export class InventarioService {
     precio: number
     stockInicial: number
     categoriaId: number
+    unidadMedidaId?: number
   }): Observable<Producto> {
     return this.http.post<Producto>(`${this.base}/productos`, dto)
+  }
+
+  getUnidades(): Observable<UnidadMedida[]> {
+    return this.http.get<UnidadMedida[]>(`${this.base}/unidades`)
+  }
+  crearUnidad(dto: { nombre: string; abreviatura: string }): Observable<UnidadMedida> {
+    return this.http.post<UnidadMedida>(`${this.base}/unidades`, dto)
   }
 
   eliminarProducto(id: number): Observable<void> {

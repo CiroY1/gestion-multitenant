@@ -126,6 +126,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/traslados',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-unidades',
+        label: 'Unidades',
+        link: '/inventario/unidades',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

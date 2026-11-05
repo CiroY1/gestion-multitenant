@@ -11,6 +11,7 @@ import { PedidosVenta } from './pedidos/pedidos'
 import { Bodegas } from './bodegas/bodegas'
 import { Existencias } from './existencias/existencias'
 import { Traslados } from './traslados/traslados'
+import { Unidades } from './unidades/unidades'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -72,5 +73,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'traslados',
     component: Traslados,
     data: { title: 'Traslados' },
+  },
+  {
+    path: 'unidades',
+    component: Unidades,
+    data: { title: 'Unidades de medida' },
   },
 ]

@@ -15,6 +15,10 @@ public class Producto
     public int CategoriaId { get; set; }
     public Categoria? Categoria { get; set; }
 
+    /// <summary>Unidad de medida base del producto.</summary>
+    public int? UnidadMedidaId { get; set; }
+    public UnidadMedida? UnidadMedida { get; set; }
+
     /// <summary>Empresa (tenant) dueña del registro.</summary>
     public string TenantId { get; set; } = string.Empty;
 
