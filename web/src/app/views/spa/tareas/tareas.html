@@ -113,7 +113,8 @@
 
       @if (!cargando() && !error() && tareas().length) {
         <div class="p-3 border-top text-muted">
-          <span class="fw-semibold">{{ tareas().length }}</span> tarea(s) ·
+          <span class="fw-semibold">{{ tareas().length }}</span>
+          {{ tareas().length === 1 ? 'tarea' : 'tareas' }} ·
           <span class="fw-semibold">{{ pendientes() }}</span> sin terminar
         </div>
       }

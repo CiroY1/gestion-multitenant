@@ -7,6 +7,45 @@
   </div>
 }
 
+@if (!cargando() && !error() && bebes().length) {
+  <div class="row">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-24">
+                <i class="bx bx-baby-carriage"></i>
+              </span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Bebés registrados</p>
+              <h4 class="mb-0">{{ total() }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-success-subtle text-success rounded fs-24">
+                <i class="bx bx-check-shield"></i>
+              </span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Elegibles ahora</p>
+              <h4 class="mb-0">{{ elegibles() }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
 <div class="row">
   <div class="col-12">
     <div class="card">
@@ -100,7 +139,8 @@
 
       @if (!cargando() && !error() && bebes().length) {
         <div class="p-3 border-top text-muted">
-          <span class="fw-semibold">{{ bebes().length }}</span> bebé(s)
+          <span class="fw-semibold">{{ bebes().length }}</span>
+          {{ bebes().length === 1 ? 'bebé registrado' : 'bebés registrados' }}
         </div>
       }
     </div>

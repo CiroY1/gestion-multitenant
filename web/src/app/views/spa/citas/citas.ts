@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms'
 import {
   SpaService,
   type Cita,
+  type Sala,
   type ServicioSpa,
   type Trabajador,
 } from '../spa.service'
@@ -24,6 +25,7 @@ export class Citas implements OnInit {
   servicios = signal<ServicioSpa[]>([])
   clientes = signal<Cliente[]>([])
   trabajadores = signal<Trabajador[]>([])
+  salas = signal<Sala[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -36,6 +38,7 @@ export class Citas implements OnInit {
     servicioId: 0,
     clienteId: 0,
     trabajadorId: 0,
+    salaId: 0,
     bebeNombre: '',
     fechaHora: '',
     notas: '',
@@ -57,6 +60,10 @@ export class Citas implements OnInit {
     })
     this.spa.getTrabajadores().subscribe({
       next: (t) => this.trabajadores.set(t.filter((x) => x.activo)),
+      error: () => {},
+    })
+    this.spa.getSalas().subscribe({
+      next: (s) => this.salas.set(s.filter((x) => x.activa)),
       error: () => {},
     })
   }
@@ -85,6 +92,7 @@ export class Citas implements OnInit {
       servicioId: this.servicios()[0]?.id ?? 0,
       clienteId: this.clientes()[0]?.id ?? 0,
       trabajadorId: 0,
+      salaId: 0,
       bebeNombre: '',
       fechaHora: '',
       notas: '',
@@ -104,6 +112,7 @@ export class Citas implements OnInit {
         servicioId: this.form.servicioId,
         clienteId: this.form.clienteId,
         trabajadorId: this.form.trabajadorId || undefined,
+        salaId: this.form.salaId || undefined,
         bebeNombre: this.form.bebeNombre,
         fechaHora: this.form.fechaHora,
         notas: this.form.notas,

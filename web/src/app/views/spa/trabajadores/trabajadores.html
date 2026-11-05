@@ -96,7 +96,8 @@
 
       @if (!cargando() && !error() && trabajadores().length) {
         <div class="p-3 border-top text-muted">
-          <span class="fw-semibold">{{ trabajadores().length }}</span> trabajador(es)
+          <span class="fw-semibold">{{ trabajadores().length }}</span>
+          {{ trabajadores().length === 1 ? 'trabajador' : 'trabajadores' }}
         </div>
       }
     </div>

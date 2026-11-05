@@ -98,7 +98,8 @@
 
       @if (!cargando() && !error() && servicios().length) {
         <div class="p-3 border-top text-muted">
-          <span class="fw-semibold">{{ total() }}</span> servicio(s)
+          <span class="fw-semibold">{{ total() }}</span>
+          {{ total() === 1 ? 'servicio' : 'servicios' }}
         </div>
       }
     </div>
