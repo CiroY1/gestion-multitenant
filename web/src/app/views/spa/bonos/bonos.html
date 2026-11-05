@@ -1,0 +1,159 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Bonos'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-wallet"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Bonos vendidos</h5>
+              <small class="text-muted">Saldo de sesiones por cliente</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirForm()">
+              <i class="bx bx-plus me-1"></i>Vender bono
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Cliente</th>
+              <th>Paquete</th>
+              <th class="text-center">Sesiones restantes</th>
+              <th class="text-end">Precio</th>
+              <th>Comprado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (bonos().length === 0) {
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
+                      <i class="bx bx-wallet"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay bonos</h5>
+                  <p class="text-muted mb-0">Vende el primero con "Vender bono".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (b of bonos(); track b.id) {
+                <tr>
+                  <td class="fw-medium">{{ b.clienteNombre }}</td>
+                  <td>{{ b.paqueteNombre }}</td>
+                  <td class="text-center">
+                    <span class="badge" [class.bg-success-subtle]="!agotado(b)" [class.text-success]="!agotado(b)"
+                          [class.bg-danger-subtle]="agotado(b)" [class.text-danger]="agotado(b)">
+                      {{ b.sesionesRestantes }} / {{ b.sesionesTotal }}
+                    </span>
+                  </td>
+                  <td class="text-end fw-semibold">$ {{ b.precio | number: '1.0-0' }}</td>
+                  <td class="text-muted">{{ b.creadoEn | date: 'short' }}</td>
+                  <td class="text-center text-nowrap">
+                    @if (procesando() === b.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      <button class="btn btn-sm btn-soft-success me-1" (click)="consumir(b)"
+                              [disabled]="agotado(b)" title="Usar una sesión">
+                        <i class="bx bx-minus-circle fs-16"></i>
+                      </button>
+                      @if (esAdmin) {
+                        <button class="btn btn-sm btn-soft-danger" (click)="eliminar(b)" title="Eliminar">
+                          <i class="bx bx-trash fs-16"></i>
+                        </button>
+                      }
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && bonos().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ bonos().length }}</span>
+          {{ bonos().length === 1 ? 'bono' : 'bonos' }}
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal: vender bono -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Vender bono</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Cliente</label>
+            <select class="form-select" [(ngModel)]="form.clienteId">
+              @for (c of clientes(); track c.id) {
+                <option [ngValue]="c.id">{{ c.nombre }}</option>
+              }
+            </select>
+            @if (clientes().length === 0) {
+              <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
+            }
+          </div>
+          <div class="mb-1">
+            <label class="form-label">Paquete</label>
+            <select class="form-select" [(ngModel)]="form.paqueteId">
+              @for (p of paquetes(); track p.id) {
+                <option [ngValue]="p.id">{{ p.nombre }} · {{ p.sesiones }} sesiones</option>
+              }
+            </select>
+            @if (paquetes().length === 0) {
+              <small class="text-muted">No hay paquetes activos. Créalos en Paquetes.</small>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="vender()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Vender
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

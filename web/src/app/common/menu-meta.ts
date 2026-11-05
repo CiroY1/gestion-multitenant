@@ -224,6 +224,20 @@ export const MENU: MenuItem[] = [
     parentKey: 'spa',
   },
   {
+    key: 'spa-paquetes',
+    icon: 'iconamoon:box-duotone',
+    label: 'Paquetes',
+    link: '/spa/paquetes',
+    parentKey: 'spa',
+  },
+  {
+    key: 'spa-bonos',
+    icon: 'iconamoon:credit-card-duotone',
+    label: 'Bonos',
+    link: '/spa/bonos',
+    parentKey: 'spa',
+  },
+  {
     key: 'sistema',
     label: 'SISTEMA',
     isTitle: true,
