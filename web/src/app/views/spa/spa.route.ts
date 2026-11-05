@@ -2,6 +2,7 @@ import { Route } from '@angular/router'
 import { Bebes } from './bebes/bebes'
 import { Calendario } from './calendario/calendario'
 import { Citas } from './citas/citas'
+import { Eventos } from './eventos/eventos'
 import { Salas } from './salas/salas'
 import { Servicios } from './servicios/servicios'
 import { Tareas } from './tareas/tareas'
@@ -12,6 +13,7 @@ export const SPA_ROUTES: Route[] = [
   { path: 'calendario', component: Calendario, data: { title: 'Agenda' } },
   { path: 'servicios', component: Servicios, data: { title: 'Servicios' } },
   { path: 'citas', component: Citas, data: { title: 'Citas' } },
+  { path: 'eventos', component: Eventos, data: { title: 'Eventos' } },
   { path: 'bebes', component: Bebes, data: { title: 'Bebés' } },
   { path: 'salas', component: Salas, data: { title: 'Salas' } },
   { path: 'trabajadores', component: Trabajadores, data: { title: 'Trabajadores' } },

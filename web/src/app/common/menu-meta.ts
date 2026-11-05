@@ -189,6 +189,13 @@ export const MENU: MenuItem[] = [
     parentKey: 'spa',
   },
   {
+    key: 'spa-eventos',
+    icon: 'iconamoon:ticket-duotone',
+    label: 'Eventos',
+    link: '/spa/eventos',
+    parentKey: 'spa',
+  },
+  {
     key: 'spa-bebes',
     icon: 'iconamoon:star-duotone',
     label: 'Bebés',

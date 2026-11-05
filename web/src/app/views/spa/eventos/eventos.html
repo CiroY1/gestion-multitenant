@@ -1,0 +1,237 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Eventos'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-group"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Eventos y clases grupales</h5>
+              <small class="text-muted">Sesiones con cupo (p. ej. estimulación temprana)</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirForm()">
+              <i class="bx bx-plus me-1"></i>Nuevo evento
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Evento</th>
+              <th>Terapeuta</th>
+              <th>Sala</th>
+              <th class="text-center">Inscritos</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (eventos().length === 0) {
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
+                      <i class="bx bx-group"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay eventos</h5>
+                  <p class="text-muted mb-0">Crea el primero con "Nuevo evento".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (e of eventos(); track e.id) {
+                <tr>
+                  <td class="fw-medium">{{ e.fechaHora | date: 'short' }}</td>
+                  <td>
+                    {{ e.titulo }}
+                    @if (e.notas) {
+                      <small class="text-muted d-block">{{ e.notas }}</small>
+                    }
+                  </td>
+                  <td class="text-muted">{{ e.trabajadorNombre || '—' }}</td>
+                  <td class="text-muted">{{ e.salaNombre || '—' }}</td>
+                  <td class="text-center">
+                    <span class="badge" [class.bg-success-subtle]="!lleno(e)" [class.text-success]="!lleno(e)"
+                          [class.bg-danger-subtle]="lleno(e)" [class.text-danger]="lleno(e)">
+                      {{ e.inscritos }} / {{ e.cupo }}
+                    </span>
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-primary me-1" (click)="abrirInscripciones(e)" title="Inscripciones">
+                      <i class="bx bx-user-plus fs-16"></i>
+                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(e)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && eventos().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ eventos().length }}</span>
+          {{ eventos().length === 1 ? 'evento' : 'eventos' }}
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal: nuevo evento -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo evento</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Título</label>
+              <input class="form-control" [(ngModel)]="form.titulo" placeholder="Ej. Estimulación temprana" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Cupo</label>
+              <input type="number" min="1" class="form-control" [(ngModel)]="form.cupo" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha y hora</label>
+              <input type="datetime-local" class="form-control" [(ngModel)]="form.fechaHora" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Duración (min)</label>
+              <input type="number" min="1" class="form-control" [(ngModel)]="form.duracionMin" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Terapeuta (opcional)</label>
+              <select class="form-select" [(ngModel)]="form.trabajadorId">
+                <option [ngValue]="0">Sin asignar</option>
+                @for (t of trabajadores(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Sala (opcional)</label>
+              <select class="form-select" [(ngModel)]="form.salaId">
+                <option [ngValue]="0">Sin asignar</option>
+                @for (s of salas(); track s.id) {
+                  <option [ngValue]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notas (opcional)</label>
+              <input class="form-control" [(ngModel)]="form.notas" placeholder="Detalles del evento" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="crear()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Crear evento
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Modal: inscripciones -->
+@if (eventoSel(); as ev) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="cerrarInscripciones()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title">Inscripciones</h5>
+            <small class="text-muted">{{ ev.titulo }} · {{ ev.inscritos }} / {{ ev.cupo }}</small>
+          </div>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarInscripciones()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex gap-2 mb-3">
+            <select class="form-select" [(ngModel)]="bebeAInscribir">
+              <option [ngValue]="0">Selecciona un bebé…</option>
+              @for (b of bebes(); track b.id) {
+                <option [ngValue]="b.id">{{ b.nombre }}</option>
+              }
+            </select>
+            <button class="btn btn-primary text-nowrap" (click)="inscribir()"
+                    [disabled]="procesandoIns() || !bebeAInscribir || lleno(ev)">
+              <i class="bx bx-plus me-1"></i>Inscribir
+            </button>
+          </div>
+          @if (lleno(ev)) {
+            <div class="alert alert-warning py-2">El evento alcanzó su cupo.</div>
+          }
+          @if (bebes().length === 0) {
+            <div class="text-muted">No hay bebés registrados. Créalos en Bebés.</div>
+          }
+
+          @if (cargandoIns()) {
+            <div class="text-center text-muted py-3">
+              <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+            </div>
+          } @else if (inscripciones().length === 0) {
+            <div class="text-muted text-center py-3">Nadie inscrito todavía.</div>
+          } @else {
+            <ul class="list-group">
+              @for (ins of inscripciones(); track ins.id) {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>{{ ins.bebeNombre }}</span>
+                  <button class="btn btn-sm btn-soft-danger" (click)="desinscribir(ins)" [disabled]="procesandoIns()" title="Quitar">
+                    <i class="bx bx-x"></i>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="cerrarInscripciones()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
