@@ -1,0 +1,165 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Bebés'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-baby-carriage"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Fichas de bebés</h5>
+              <small class="text-muted">Elegibilidad: 2 semanas a 12 meses de edad</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirCrear()">
+              <i class="bx bx-plus me-1"></i>Nuevo bebé
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Bebé</th>
+              <th>Responsable</th>
+              <th>Nacimiento</th>
+              <th>Edad</th>
+              <th class="text-center">Peso</th>
+              <th>Alergias</th>
+              <th class="text-center">Elegibilidad</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="8" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="8" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (bebes().length === 0) {
+              <tr><td colspan="8" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
+                      <i class="bx bx-baby-carriage"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay bebés</h5>
+                  <p class="text-muted mb-0">Registra el primero con "Nuevo bebé".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (b of bebes(); track b.id) {
+                <tr>
+                  <td class="fw-medium">{{ b.nombre }}</td>
+                  <td class="text-muted">{{ b.clienteNombre || '—' }}</td>
+                  <td>{{ b.fechaNacimiento }}</td>
+                  <td>{{ edadTexto(b.fechaNacimiento) }}</td>
+                  <td class="text-center">{{ b.peso ? (b.peso + ' kg') : '—' }}</td>
+                  <td class="text-muted">{{ b.alergias || '—' }}</td>
+                  <td class="text-center">
+                    <span class="badge {{ elegibilidad(b.fechaNacimiento).cls }}">
+                      {{ elegibilidad(b.fechaNacimiento).label }}
+                    </span>
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(b)" title="Editar">
+                      <i class="bx bx-edit fs-16"></i>
+                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(b)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && bebes().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ bebes().length }}</span> bebé(s)
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal: crear / editar bebé -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editId() ? 'Editar bebé' : 'Nuevo bebé' }}</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre del bebé</label>
+              <input class="form-control" [(ngModel)]="form.nombre" placeholder="Ej. Sofía" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Responsable (cliente)</label>
+              <select class="form-select" [(ngModel)]="form.clienteId">
+                <option [ngValue]="0">Sin asignar</option>
+                @for (c of clientes(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de nacimiento</label>
+              <input type="date" class="form-control" [(ngModel)]="form.fechaNacimiento" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Peso (kg, opcional)</label>
+              <input type="number" step="0.1" min="0" class="form-control" [(ngModel)]="form.peso" placeholder="Ej. 6.5" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Alergias (opcional)</label>
+              <input class="form-control" [(ngModel)]="form.alergias" placeholder="Ej. ninguna" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notas de desarrollo (opcional)</label>
+              <input class="form-control" [(ngModel)]="form.notas" placeholder="Observaciones" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
