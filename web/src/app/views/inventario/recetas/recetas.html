@@ -101,6 +101,34 @@
             </div>
           </div>
         }
+
+        @if (produciendo(); as r) {
+          <div class="mt-3 p-3 rounded bg-light-subtle border">
+            <h5 class="mb-2">Producir: {{ r.productoFinal }}</h5>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label">Cantidad a producir</label>
+                <input type="number" class="form-control" [(ngModel)]="producirCantidad" min="1" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Bodega</label>
+                <select class="form-select" [(ngModel)]="producirBodegaId">
+                  @for (b of bodegas(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-success" (click)="confirmarProducir()" [disabled]="procesandoProd()">
+                  @if (procesandoProd()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Producir
+                </button>
+                <button class="btn btn-light" (click)="produciendo.set(null)">Cancelar</button>
+              </div>
+            </div>
+            <small class="text-muted">Consume los insumos de esa bodega y suma el terminado en ella.</small>
+          </div>
+        }
       </div>
 
       <div class="table-responsive table-centered">
@@ -141,7 +169,7 @@
                   <td><span class="badge bg-light text-dark">{{ r.productoFinal }}</span></td>
                   <td class="text-center"><span class="badge bg-info-subtle text-info">{{ r.ingredientes }}</span></td>
                   <td class="text-center">
-                    <button class="btn btn-sm btn-soft-success" (click)="producir(r)">
+                    <button class="btn btn-sm btn-soft-success" (click)="abrirProducir(r)">
                       <i class="bx bx-cog me-1"></i>Producir
                     </button>
                   </td>

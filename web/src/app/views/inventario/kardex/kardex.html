@@ -54,6 +54,7 @@
               <tr>
                 <th>Fecha</th>
                 <th>Documento</th>
+                <th>Bodega</th>
                 <th>Concepto</th>
                 <th class="text-center">Entrada</th>
                 <th class="text-center">Salida</th>
@@ -65,11 +66,11 @@
             </thead>
             <tbody>
               @if (cargando()) {
-                <tr><td colspan="9" class="text-center text-muted py-5">
+                <tr><td colspan="10" class="text-center text-muted py-5">
                   <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
                 </td></tr>
               } @else if (k.movimientos.length === 0) {
-                <tr><td colspan="9" class="py-5">
+                <tr><td colspan="10" class="py-5">
                   <div class="text-center">
                     <div class="avatar-lg mx-auto mb-3">
                       <span class="avatar-title bg-light text-muted rounded-circle fs-24">
@@ -91,6 +92,7 @@
                         <span class="badge bg-light text-dark">{{ m.documentoTipo }}</span>
                       }
                     </td>
+                    <td><span class="badge bg-light text-dark">{{ m.bodega }}</span></td>
                     <td class="text-muted">{{ m.concepto }}</td>
                     <td class="text-center">
                       @if (m.entrada) { <span class="text-success">+{{ m.entrada }}</span> }
