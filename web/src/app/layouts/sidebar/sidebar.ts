@@ -14,6 +14,7 @@ import { changesidebarsize } from '@/app/store/layout/layout-action'
 import { Store } from '@ngrx/store'
 import { getSidebarsize } from '@/app/store/layout/layout-selector'
 import { basePath } from '@/app/common/constants'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-sidebar',
@@ -36,6 +37,7 @@ export class Sidebar {
 
   store = inject(Store)
   router = inject(Router)
+  private auth = inject(AuthenticationService)
   trimmedURL = this.router.url?.replaceAll(
     basePath !== '' ? basePath + '/' : '',
     '/'
@@ -61,7 +63,15 @@ export class Sidebar {
   }
 
   initMenu(): void {
-    this.menuItems = MENU
+    // Cada empresa ve solo los módulos que contrató. Por ahora el módulo spa
+    // es opcional: se oculta si la empresa no lo tiene activo.
+    const modulos = this.auth.modulos
+    this.menuItems = MENU.filter((item) => {
+      if ((item.key === 'spa' || item.parentKey === 'spa') && !modulos?.spa) {
+        return false
+      }
+      return true
+    })
   }
 
   ngAfterViewInit() {

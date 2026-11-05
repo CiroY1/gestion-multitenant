@@ -1,8 +1,10 @@
 import { Global, Module } from '@nestjs/common'
 import { Pool } from 'pg'
+import { MigrationsService } from './migrations.service'
+import { PG_POOL } from './pg.token'
 
-/** Token de inyección del pool de conexiones a Postgres (Neon). */
-export const PG_POOL = 'PG_POOL'
+// Se re-exporta para que el resto del código pueda seguir importándolo desde aquí.
+export { PG_POOL } from './pg.token'
 
 /**
  * Pool compartido hacia la MISMA base Neon que usa el backend .NET.
@@ -26,6 +28,7 @@ export const PG_POOL = 'PG_POOL'
         })
       },
     },
+    MigrationsService,
   ],
   exports: [PG_POOL],
 })

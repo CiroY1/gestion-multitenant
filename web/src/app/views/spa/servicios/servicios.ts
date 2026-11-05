@@ -1,0 +1,84 @@
+import { PageTitle } from '@/app/components/page-title'
+import { CommonModule } from '@angular/common'
+import { Component, OnInit, computed, inject, signal } from '@angular/core'
+import { FormsModule } from '@angular/forms'
+import { SpaService, type ServicioSpa } from '../spa.service'
+
+@Component({
+  selector: 'app-spa-servicios',
+  standalone: true,
+  imports: [CommonModule, FormsModule, PageTitle],
+  templateUrl: './servicios.html',
+})
+export class Servicios implements OnInit {
+  private spa = inject(SpaService)
+
+  servicios = signal<ServicioSpa[]>([])
+  cargando = signal(true)
+  error = signal<string | null>(null)
+  aviso = signal<string | null>(null)
+
+  mostrarForm = signal(false)
+  guardando = signal(false)
+  nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0 }
+
+  total = computed(() => this.servicios().length)
+
+  ngOnInit(): void {
+    this.cargar()
+  }
+
+  cargar(): void {
+    this.cargando.set(true)
+    this.error.set(null)
+    this.spa.getServicios().subscribe({
+      next: (d) => {
+        this.servicios.set(d)
+        this.cargando.set(false)
+      },
+      error: (e) => {
+        this.error.set(
+          e?.status === 403
+            ? 'Tu empresa no tiene activo el módulo spa.'
+            : 'No se pudo conectar con el segundo backend (puerto 5046).'
+        )
+        this.cargando.set(false)
+      },
+    })
+  }
+
+  abrirForm(): void {
+    this.nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0 }
+    this.aviso.set(null)
+    this.mostrarForm.set(true)
+  }
+
+  crear(): void {
+    if (!this.nuevo.nombre.trim()) return
+    this.guardando.set(true)
+    this.spa.crearServicio(this.nuevo).subscribe({
+      next: () => {
+        this.guardando.set(false)
+        this.mostrarForm.set(false)
+        this.cargar()
+      },
+      error: (e) => {
+        this.guardando.set(false)
+        this.aviso.set(
+          typeof e?.error?.message === 'string'
+            ? e.error.message
+            : 'No se pudo crear el servicio.'
+        )
+      },
+    })
+  }
+
+  eliminar(s: ServicioSpa): void {
+    if (!confirm(`¿Eliminar "${s.nombre}"?`)) return
+    this.aviso.set(null)
+    this.spa.eliminarServicio(s.id).subscribe({
+      next: () => this.cargar(),
+      error: () => this.aviso.set('No se pudo eliminar el servicio.'),
+    })
+  }
+}
