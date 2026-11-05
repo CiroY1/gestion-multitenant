@@ -22,6 +22,11 @@ export const VIEW_ROUTES: Route[] = [
       import('./sistema/sistema.route').then((mod) => mod.SISTEMA_ROUTES),
   },
   {
+    path: 'spa',
+    loadChildren: () =>
+      import('./spa/spa.route').then((mod) => mod.SPA_ROUTES),
+  },
+  {
     path: 'pages',
     loadChildren: () =>
       import('./pages/pages.route').then((mod) => mod.PAGES_ROUTES),
