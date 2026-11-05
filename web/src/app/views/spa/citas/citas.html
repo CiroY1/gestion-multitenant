@@ -45,19 +45,20 @@
               <th>Bebé</th>
               <th>Servicio</th>
               <th>Terapeuta</th>
+              <th>Sala</th>
               <th class="text-center">Estado</th>
               <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="7" class="text-center text-muted py-5">
+              <tr><td colspan="8" class="text-center text-muted py-5">
                 <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
               </td></tr>
             } @else if (error()) {
-              <tr><td colspan="7" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+              <tr><td colspan="8" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (citas().length === 0) {
-              <tr><td colspan="7" class="py-5">
+              <tr><td colspan="8" class="py-5">
                 <div class="text-center">
                   <div class="avatar-lg mx-auto mb-3">
                     <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
@@ -76,6 +77,7 @@
                   <td class="text-muted">{{ c.bebeNombre || '—' }}</td>
                   <td>{{ c.servicioNombre }}</td>
                   <td class="text-muted">{{ c.trabajadorNombre || '—' }}</td>
+                  <td class="text-muted">{{ c.salaNombre || '—' }}</td>
                   <td class="text-center">
                     <span class="badge {{ badge(c.estado) }}">{{ c.estado }}</span>
                   </td>
@@ -102,8 +104,10 @@
 
       @if (!cargando() && !error() && citas().length) {
         <div class="p-3 border-top text-muted">
-          <span class="fw-semibold">{{ citas().length }}</span> cita(s) ·
-          <span class="fw-semibold">{{ programadas() }}</span> programada(s)
+          <span class="fw-semibold">{{ citas().length }}</span>
+          {{ citas().length === 1 ? 'cita' : 'citas' }} ·
+          <span class="fw-semibold">{{ programadas() }}</span>
+          {{ programadas() === 1 ? 'programada' : 'programadas' }}
         </div>
       }
     </div>
@@ -149,6 +153,15 @@
                 <option [ngValue]="0">Sin asignar</option>
                 @for (t of trabajadores(); track t.id) {
                   <option [ngValue]="t.id">{{ t.nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Sala (opcional)</label>
+              <select class="form-select" [(ngModel)]="form.salaId">
+                <option [ngValue]="0">Sin asignar</option>
+                @for (s of salas(); track s.id) {
+                  <option [ngValue]="s.id">{{ s.nombre }}</option>
                 }
               </select>
             </div>

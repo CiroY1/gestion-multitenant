@@ -31,6 +31,8 @@ export interface Cita {
   clienteNombre: string
   trabajadorId: number | null
   trabajadorNombre: string
+  salaId: number | null
+  salaNombre: string
   duracionMin: number
   bebeNombre: string
   fechaHora: string
@@ -43,9 +45,21 @@ export interface NuevaCita {
   clienteId?: number | null
   clienteNombre?: string
   trabajadorId?: number | null
+  salaId?: number | null
   bebeNombre?: string
   fechaHora: string
   notas?: string
+}
+
+export interface Sala {
+  id: number
+  nombre: string
+  activa: boolean
+}
+
+export interface NuevaSala {
+  nombre: string
+  activa?: boolean
 }
 
 export interface Trabajador {
@@ -199,5 +213,23 @@ export class SpaService {
 
   eliminarBebe(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(`${this.base}/bebes/${id}`)
+  }
+
+  // --- Salas / recursos ---
+
+  getSalas(): Observable<Sala[]> {
+    return this.http.get<Sala[]>(`${this.base}/salas`)
+  }
+
+  crearSala(dto: NuevaSala): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/salas`, dto)
+  }
+
+  actualizarSala(id: number, dto: NuevaSala): Observable<{ ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(`${this.base}/salas/${id}`, dto)
+  }
+
+  eliminarSala(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/salas/${id}`)
   }
 }

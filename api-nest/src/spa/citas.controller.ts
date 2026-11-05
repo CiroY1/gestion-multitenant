@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   Inject,
@@ -21,6 +22,7 @@ interface CitaDto {
   clienteId?: number
   clienteNombre?: string
   trabajadorId?: number
+  salaId?: number
   bebeNombre?: string
   fechaHora?: string
   notas?: string
@@ -50,6 +52,8 @@ export class CitasController {
               "TrabajadorId" AS "trabajadorId",
               "TrabajadorNombre" AS "trabajadorNombre",
               "DuracionMin" AS "duracionMin",
+              "SalaId" AS "salaId",
+              "SalaNombre" AS "salaNombre",
               "BebeNombre" AS "bebeNombre",
               "FechaHora" AS "fechaHora",
               "Estado" AS estado,
@@ -92,6 +96,21 @@ export class CitasController {
       trabajadorNombre = trab.rows[0].Nombre
     }
 
+    // Sala (opcional): si viene, debe existir; guardamos su nombre como snapshot.
+    let salaId: number | null = null
+    let salaNombre = ''
+    if (dto.salaId != null && `${dto.salaId}` !== '' && Number(dto.salaId) > 0) {
+      const sid = Number(dto.salaId)
+      if (!Number.isInteger(sid)) throw new BadRequestException('Sala inválida.')
+      const sala = await this.pool.query<{ Nombre: string }>(
+        'SELECT "Nombre" FROM "SpaSalas" WHERE "Id" = $1 AND "TenantId" = $2',
+        [sid, u.tenantId],
+      )
+      if (!sala.rowCount) throw new BadRequestException('La sala no existe.')
+      salaId = sid
+      salaNombre = sala.rows[0].Nombre
+    }
+
     // Cliente: si viene un id, lo validamos contra el maestro compartido
     // ("Clientes", del backend .NET) y usamos su nombre como snapshot.
     let clienteId: number | null = null
@@ -117,12 +136,27 @@ export class CitasController {
       throw new BadRequestException('La fecha y hora no son válidas.')
     }
 
+    // Bloque de tiempo de la cita: [fecha, fecha + duración).
+    const dur = serv.rows[0].DuracionMin ?? 30
+    const fin = new Date(fecha.getTime() + dur * 60_000)
+
+    // Evitar doble reserva: el terapeuta y la sala no pueden tener otra cita
+    // (no cancelada) que se solape en ese horario.
+    if (trabajadorId) {
+      await this.verificarSolape('TrabajadorId', trabajadorId, u.tenantId, fecha, fin,
+        'El terapeuta ya tiene una cita en ese horario.')
+    }
+    if (salaId) {
+      await this.verificarSolape('SalaId', salaId, u.tenantId, fecha, fin,
+        'La sala ya está ocupada en ese horario.')
+    }
+
     const { rows } = await this.pool.query<{ id: number }>(
       `INSERT INTO "SpaCitas"
          ("TenantId","ServicioId","ServicioNombre","ClienteId","ClienteNombre",
-          "TrabajadorId","TrabajadorNombre","DuracionMin",
+          "TrabajadorId","TrabajadorNombre","SalaId","SalaNombre","DuracionMin",
           "BebeNombre","FechaHora","Estado","Notas")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Programada',$11)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'Programada',$13)
        RETURNING "Id" AS id`,
       [
         u.tenantId,
@@ -132,13 +166,35 @@ export class CitasController {
         clienteNombre,
         trabajadorId,
         trabajadorNombre,
-        serv.rows[0].DuracionMin ?? 30,
+        salaId,
+        salaNombre,
+        dur,
         (dto.bebeNombre ?? '').trim(),
         fecha,
         (dto.notas ?? '').trim(),
       ],
     )
     return { id: rows[0].id, ok: true }
+  }
+
+  /** Lanza 409 si ya hay otra cita (no cancelada) que se solapa por esa columna. */
+  private async verificarSolape(
+    columna: 'TrabajadorId' | 'SalaId',
+    valor: number,
+    tenantId: string,
+    inicio: Date,
+    fin: Date,
+    mensaje: string,
+  ): Promise<void> {
+    const { rowCount } = await this.pool.query(
+      `SELECT 1 FROM "SpaCitas"
+        WHERE "TenantId" = $1 AND "Estado" <> 'Cancelada' AND "${columna}" = $2
+          AND "FechaHora" < $3
+          AND ("FechaHora" + ("DuracionMin" || ' minutes')::interval) > $4
+        LIMIT 1`,
+      [tenantId, valor, fin, inicio],
+    )
+    if (rowCount) throw new ConflictException(mensaje)
   }
 
   @Post(':id/atender')

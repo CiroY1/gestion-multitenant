@@ -1,6 +1,6 @@
 import { PageTitle } from '@/app/components/page-title'
 import { CommonModule } from '@angular/common'
-import { Component, OnInit, inject, signal } from '@angular/core'
+import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SpaService, type Bebe } from '../spa.service'
 import { TercerosService, type Cliente } from '../../terceros/terceros.service'
@@ -27,6 +27,15 @@ export class Bebes implements OnInit {
 
   bebes = signal<Bebe[]>([])
   clientes = signal<Cliente[]>([])
+
+  total = computed(() => this.bebes().length)
+  elegibles = computed(
+    () =>
+      this.bebes().filter((b) => {
+        const d = this.diasDeVida(b.fechaNacimiento)
+        return d >= MIN_DIAS && d <= MAX_DIAS
+      }).length
+  )
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -149,9 +158,15 @@ export class Bebes implements OnInit {
   edadTexto(fn: string): string {
     const d = this.diasDeVida(fn)
     if (d < 0) return '—'
-    if (d < 14) return `${d} día(s)`
-    if (d < 90) return `${Math.floor(d / 7)} semanas`
-    return `${Math.floor(d / 30.44)} mes(es)`
+    if (d < 7) return d === 1 ? '1 día' : `${d} días`
+    if (d < 60) {
+      const sem = Math.floor(d / 7)
+      return sem === 1 ? '1 semana' : `${sem} semanas`
+    }
+    const meses = Math.floor(d / 30.44)
+    const sem = Math.floor((d - meses * 30.44) / 7)
+    const mesTxt = meses === 1 ? '1 mes' : `${meses} meses`
+    return sem > 0 ? `${mesTxt} y ${sem} sem` : mesTxt
   }
 
   elegibilidad(fn: string): { label: string; cls: string } {
