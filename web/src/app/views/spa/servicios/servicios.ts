@@ -20,7 +20,8 @@ export class Servicios implements OnInit {
 
   mostrarForm = signal(false)
   guardando = signal(false)
-  nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0 }
+  editId = signal<number | null>(null)
+  nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0, activo: true }
 
   total = computed(() => this.servicios().length)
 
@@ -48,15 +49,33 @@ export class Servicios implements OnInit {
   }
 
   abrirForm(): void {
-    this.nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0 }
+    this.editId.set(null)
+    this.nuevo = { nombre: '', descripcion: '', duracionMin: 30, precio: 0, activo: true }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
 
-  crear(): void {
+  abrirEditar(s: ServicioSpa): void {
+    this.editId.set(s.id)
+    this.nuevo = {
+      nombre: s.nombre,
+      descripcion: s.descripcion,
+      duracionMin: s.duracionMin,
+      precio: s.precio,
+      activo: s.activo,
+    }
+    this.aviso.set(null)
+    this.mostrarForm.set(true)
+  }
+
+  guardar(): void {
     if (!this.nuevo.nombre.trim()) return
     this.guardando.set(true)
-    this.spa.crearServicio(this.nuevo).subscribe({
+    const id = this.editId()
+    const obs = id
+      ? this.spa.actualizarServicio(id, this.nuevo)
+      : this.spa.crearServicio(this.nuevo)
+    obs.subscribe({
       next: () => {
         this.guardando.set(false)
         this.mostrarForm.set(false)
@@ -67,7 +86,7 @@ export class Servicios implements OnInit {
         this.aviso.set(
           typeof e?.error?.message === 'string'
             ? e.error.message
-            : 'No se pudo crear el servicio.'
+            : 'No se pudo guardar el servicio.'
         )
       },
     })

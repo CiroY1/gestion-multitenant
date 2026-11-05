@@ -79,7 +79,10 @@
                       <span class="badge bg-light text-muted">Inactivo</span>
                     }
                   </td>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(s)" title="Editar">
+                      <i class="bx bx-edit fs-16"></i>
+                    </button>
                     <button class="btn btn-sm btn-soft-danger" (click)="eliminar(s)" title="Eliminar">
                       <i class="bx bx-trash fs-16"></i>
                     </button>
@@ -106,7 +109,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuevo servicio</h5>
+          <h5 class="modal-title">{{ editId() ? 'Editar servicio' : 'Nuevo servicio' }}</h5>
           <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
         </div>
         <div class="modal-body">
@@ -127,11 +130,17 @@
               <label class="form-label">Precio</label>
               <input type="number" class="form-control" [(ngModel)]="nuevo.precio" min="0" />
             </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="servActivo" [(ngModel)]="nuevo.activo" />
+                <label class="form-check-label" for="servActivo">Activo</label>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
-          <button class="btn btn-success" (click)="crear()" [disabled]="guardando()">
+          <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
             @if (guardando()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
