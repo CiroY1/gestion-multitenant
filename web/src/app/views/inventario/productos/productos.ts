@@ -7,6 +7,7 @@ import {
   InventarioService,
   type Categoria,
   type Producto,
+  type UnidadMedida,
 } from '../inventario.service'
 
 @Component({
@@ -20,6 +21,7 @@ export class Productos implements OnInit {
 
   productos = signal<Producto[]>([])
   categorias = signal<Categoria[]>([])
+  unidades = signal<UnidadMedida[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -28,7 +30,7 @@ export class Productos implements OnInit {
   // Formulario de creación.
   mostrarForm = signal(false)
   guardando = signal(false)
-  nuevo = { nombre: '', descripcion: '', precio: 0, stockInicial: 0, categoriaId: 0 }
+  nuevo = { nombre: '', descripcion: '', precio: 0, stockInicial: 0, categoriaId: 0, unidadMedidaId: 0 }
 
   // Métricas.
   total = computed(() => this.productos().length)
@@ -60,6 +62,10 @@ export class Productos implements OnInit {
       next: (c) => this.categorias.set(c),
       error: () => {},
     })
+    this.inv.getUnidades().subscribe({
+      next: (u) => this.unidades.set(u),
+      error: () => {},
+    })
   }
 
   cargar(): void {
@@ -86,6 +92,7 @@ export class Productos implements OnInit {
       precio: 0,
       stockInicial: 0,
       categoriaId: this.categorias()[0]?.id ?? 0,
+      unidadMedidaId: this.unidades()[0]?.id ?? 0,
     }
     this.mostrarForm.set(true)
   }

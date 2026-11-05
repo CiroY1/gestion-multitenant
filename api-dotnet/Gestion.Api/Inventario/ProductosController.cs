@@ -30,7 +30,8 @@ public class ProductosController : ControllerBase
             .OrderBy(p => p.Nombre)
             .Select(p => new ProductoDto(
                 p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock, p.CostoPromedio,
-                p.CategoriaId, p.Categoria!.Nombre))
+                p.CategoriaId, p.Categoria!.Nombre,
+                p.UnidadMedidaId, p.UnidadMedida != null ? p.UnidadMedida.Abreviatura : null))
             .ToListAsync();
         return Ok(items);
     }
@@ -39,12 +40,13 @@ public class ProductosController : ControllerBase
     public async Task<ActionResult<ProductoDto>> Obtener(int id)
     {
         var t = _tenant.GetTenantId();
-        var p = await _db.Productos.Include(x => x.Categoria)
+        var p = await _db.Productos.Include(x => x.Categoria).Include(x => x.UnidadMedida)
             .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
         return p is null
             ? NotFound()
             : Ok(new ProductoDto(p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
-                p.CostoPromedio, p.CategoriaId, p.Categoria?.Nombre));
+                p.CostoPromedio, p.CategoriaId, p.Categoria?.Nombre,
+                p.UnidadMedidaId, p.UnidadMedida?.Abreviatura));
     }
 
     [HttpPost]
@@ -69,13 +71,15 @@ public class ProductosController : ControllerBase
             Precio = dto.Precio,
             Stock = dto.StockInicial,
             CategoriaId = dto.CategoriaId,
+            UnidadMedidaId = dto.UnidadMedidaId,
             TenantId = t,
         };
         _db.Productos.Add(producto);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Obtener), new { id = producto.Id },
             new ProductoDto(producto.Id, producto.Nombre, producto.Descripcion,
-                producto.Precio, producto.Stock, producto.CostoPromedio, producto.CategoriaId, null));
+                producto.Precio, producto.Stock, producto.CostoPromedio, producto.CategoriaId, null,
+                producto.UnidadMedidaId, null));
     }
 
     [HttpPut("{id:int}")]
@@ -98,6 +102,7 @@ public class ProductosController : ControllerBase
         p.Descripcion = dto.Descripcion;
         p.Precio = dto.Precio;
         p.CategoriaId = dto.CategoriaId;
+        p.UnidadMedidaId = dto.UnidadMedidaId;
         // El stock NO se edita aquí: cambia solo con movimientos.
         await _db.SaveChangesAsync();
         return NoContent();

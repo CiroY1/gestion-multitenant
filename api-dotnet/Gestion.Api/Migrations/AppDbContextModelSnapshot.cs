@@ -595,11 +595,16 @@ namespace Gestion.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("UnidadMedidaId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriaId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("UnidadMedidaId");
 
                     b.ToTable("Productos");
                 });
@@ -908,6 +913,33 @@ namespace Gestion.Api.Migrations
                     b.ToTable("TrasladoLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.UnidadMedida", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Abreviatura")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("UnidadesMedida");
+                });
+
             modelBuilder.Entity("Gestion.Api.Terceros.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -1138,7 +1170,14 @@ namespace Gestion.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Gestion.Api.Inventario.UnidadMedida", "UnidadMedida")
+                        .WithMany()
+                        .HasForeignKey("UnidadMedidaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Categoria");
+
+                    b.Navigation("UnidadMedida");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>

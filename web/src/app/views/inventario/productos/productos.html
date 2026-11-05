@@ -129,6 +129,14 @@
                 <label class="form-label">Stock inicial</label>
                 <input type="number" class="form-control" [(ngModel)]="nuevo.stockInicial" />
               </div>
+              <div class="col-md-2">
+                <label class="form-label">Unidad</label>
+                <select class="form-select" [(ngModel)]="nuevo.unidadMedidaId">
+                  @for (u of unidades(); track u.id) {
+                    <option [ngValue]="u.id">{{ u.nombre }} ({{ u.abreviatura }})</option>
+                  }
+                </select>
+              </div>
               <div class="col-md-2 d-flex gap-2">
                 <button class="btn btn-success w-100" (click)="crear()" [disabled]="guardando()">
                   @if (guardando()) {
@@ -183,7 +191,12 @@
                 <tr>
                   <td class="text-muted">{{ p.id }}</td>
                   <td>
-                    <h5 class="mt-0 mb-1 fs-14">{{ p.nombre }}</h5>
+                    <h5 class="mt-0 mb-1 fs-14">
+                      {{ p.nombre }}
+                      @if (p.unidad) {
+                        <span class="badge bg-light text-muted ms-1">{{ p.unidad }}</span>
+                      }
+                    </h5>
                     @if (p.descripcion) {
                       <span class="fs-13 text-muted">{{ p.descripcion }}</span>
                     }

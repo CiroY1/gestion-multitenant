@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
     public DbSet<PedidoVentaLinea> PedidoVentaLineas => Set<PedidoVentaLinea>();
     public DbSet<Ajuste> Ajustes => Set<Ajuste>();
     public DbSet<AjusteLinea> AjusteLineas => Set<AjusteLinea>();
+    public DbSet<UnidadMedida> UnidadesMedida => Set<UnidadMedida>();
     public DbSet<Bodega> Bodegas => Set<Bodega>();
     public DbSet<ExistenciaBodega> ExistenciaBodegas => Set<ExistenciaBodega>();
     public DbSet<Traslado> Traslados => Set<Traslado>();
@@ -50,6 +51,10 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Inventario
+        modelBuilder.Entity<UnidadMedida>().HasIndex(u => u.TenantId);
+        modelBuilder.Entity<Producto>()
+            .HasOne(p => p.UnidadMedida).WithMany()
+            .HasForeignKey(p => p.UnidadMedidaId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Producto>().Property(p => p.Precio).HasPrecision(12, 2);
         modelBuilder.Entity<Producto>().Property(p => p.CostoPromedio).HasPrecision(12, 2);
         modelBuilder.Entity<Categoria>().HasIndex(c => c.TenantId);
