@@ -102,6 +102,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/kardex',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-ajustes',
+        label: 'Ajustes',
+        link: '/inventario/ajustes',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

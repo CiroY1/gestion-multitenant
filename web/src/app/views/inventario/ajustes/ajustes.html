@@ -1,0 +1,181 @@
+<app-page-title [title]="'Inventario'" [subtitle]="'Ajustes'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-warning-subtle text-warning rounded fs-20">
+                <i class="bx bx-slider-alt"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Ajustes de inventario</h5>
+              <small class="text-muted">Correcciones de stock con motivo (conteo físico, avería, sobrante)</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirForm()">
+              <i class="bx bx-plus me-1"></i>Nuevo ajuste
+            </button>
+          </div>
+        </div>
+
+        @if (mostrarForm()) {
+          <div class="mt-3 p-3 rounded bg-light-subtle border">
+            @if (errorForm()) {
+              <div class="alert alert-danger">{{ errorForm() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label">Motivo</label>
+              <input class="form-control" [(ngModel)]="motivo"
+                placeholder="Conteo físico, avería, merma, sobrante…" />
+            </div>
+
+            <label class="form-label">Líneas del ajuste</label>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-2">
+                <thead class="bg-light">
+                  <tr>
+                    <th>Producto</th>
+                    <th style="width: 110px" class="text-center">Stock actual</th>
+                    <th style="width: 140px">Tipo</th>
+                    <th style="width: 120px">Cantidad</th>
+                    <th style="width: 48px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (l of lineas; track $index) {
+                    <tr>
+                      <td>
+                        <select class="form-select" [(ngModel)]="l.productoId">
+                          @for (p of productos(); track p.id) {
+                            <option [ngValue]="p.id">{{ p.nombre }}</option>
+                          }
+                        </select>
+                      </td>
+                      <td class="text-center text-muted">{{ stockDe(l.productoId) }}</td>
+                      <td>
+                        <select class="form-select" [(ngModel)]="l.tipo">
+                          <option value="Entrada">Entrada (+)</option>
+                          <option value="Salida">Salida (−)</option>
+                        </select>
+                      </td>
+                      <td><input type="number" class="form-control" [(ngModel)]="l.cantidad" min="1" /></td>
+                      <td>
+                        <button class="btn btn-sm btn-soft-danger" (click)="quitarLinea($index)">
+                          <i class="bx bx-x"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <button class="btn btn-sm btn-soft-primary" (click)="agregarLinea()">
+              <i class="bx bx-plus me-1"></i>Agregar línea
+            </button>
+            <div class="mt-3 d-flex gap-2 justify-content-end">
+              <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+              <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
+                @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                Crear ajuste
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>N°</th>
+              <th>Motivo</th>
+              <th>Fecha</th>
+              <th class="text-center">Líneas</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (ajustes().length === 0) {
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-24">
+                      <i class="bx bx-slider-alt"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay ajustes</h5>
+                  <p class="text-muted mb-0">Crea el primero con "Nuevo ajuste".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (a of ajustes(); track a.id) {
+                <tr>
+                  <td class="fw-semibold">{{ a.numero }}</td>
+                  <td>{{ a.motivo }}</td>
+                  <td>{{ a.fecha | date: 'short' }}</td>
+                  <td class="text-center"><span class="badge bg-light text-dark">{{ a.items }}</span></td>
+                  <td class="text-center">
+                    @switch (a.estado) {
+                      @case ('Borrador') { <span class="badge bg-warning-subtle text-warning">Borrador</span> }
+                      @case ('Confirmado') { <span class="badge bg-success-subtle text-success">Confirmado</span> }
+                      @case ('Anulado') { <span class="badge bg-danger-subtle text-danger">Anulado</span> }
+                    }
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-info me-1" (click)="pdf(a)" title="PDF">
+                      <i class="bx bxs-file-pdf fs-16"></i>
+                    </button>
+                    @if (procesando() === a.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      @if (a.estado === 'Borrador') {
+                        <button class="btn btn-sm btn-soft-success me-1" (click)="confirmar(a)" title="Confirmar">
+                          <i class="bx bx-check fs-16"></i>
+                        </button>
+                      }
+                      @if (a.estado !== 'Anulado') {
+                        <button class="btn btn-sm btn-soft-danger" (click)="anular(a)" title="Anular">
+                          <i class="bx bx-x-circle fs-16"></i>
+                        </button>
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && ajustes().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ ajustes().length }}</span> ajustes registrados
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -163,6 +163,15 @@ export interface Receta {
   ingredientes: number
 }
 
+export interface Ajuste {
+  id: number
+  numero: string
+  motivo: string
+  fecha: string
+  estado: EstadoDocumento
+  items: number
+}
+
 export type TipoNota = 'Credito' | 'Debito'
 
 export interface Nota {
@@ -351,6 +360,25 @@ export class InventarioService {
         a.click()
         setTimeout(() => URL.revokeObjectURL(url), 5000)
       })
+  }
+
+  getAjustes(): Observable<Ajuste[]> {
+    return this.http.get<Ajuste[]>(`${this.base}/ajustes`)
+  }
+
+  crearAjuste(dto: {
+    motivo: string
+    lineas: { productoId: number; tipo: 'Entrada' | 'Salida'; cantidad: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/ajustes`, dto)
+  }
+
+  confirmarAjuste(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/ajustes/${id}/confirmar`, {})
+  }
+
+  anularAjuste(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/ajustes/${id}/anular`, {})
   }
 
   getNotas(): Observable<Nota[]> {

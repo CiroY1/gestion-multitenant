@@ -5,6 +5,7 @@ import { Remisiones } from './remisiones/remisiones'
 import { Recetas } from './recetas/recetas'
 import { Notas } from './notas/notas'
 import { KardexView } from './kardex/kardex'
+import { Ajustes } from './ajustes/ajustes'
 import { OrdenesCompra } from './ordenes/ordenes'
 import { PedidosVenta } from './pedidos/pedidos'
 
@@ -48,5 +49,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'kardex',
     component: KardexView,
     data: { title: 'Kardex' },
+  },
+  {
+    path: 'ajustes',
+    component: Ajustes,
+    data: { title: 'Ajustes' },
   },
 ]

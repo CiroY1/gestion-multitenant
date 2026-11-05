@@ -32,6 +32,8 @@ public class AppDbContext : DbContext
     public DbSet<OrdenCompraLinea> OrdenCompraLineas => Set<OrdenCompraLinea>();
     public DbSet<PedidoVenta> PedidosVenta => Set<PedidoVenta>();
     public DbSet<PedidoVentaLinea> PedidoVentaLineas => Set<PedidoVentaLinea>();
+    public DbSet<Ajuste> Ajustes => Set<Ajuste>();
+    public DbSet<AjusteLinea> AjusteLineas => Set<AjusteLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -121,6 +123,16 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RecetaIngrediente>()
             .HasOne(i => i.Producto).WithMany()
             .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Ajustes de inventario
+        modelBuilder.Entity<Ajuste>().HasIndex(a => a.TenantId);
+        modelBuilder.Entity<Ajuste>().HasIndex(a => new { a.TenantId, a.Numero });
+        modelBuilder.Entity<Ajuste>()
+            .HasMany(a => a.Lineas).WithOne(l => l.Ajuste!)
+            .HasForeignKey(l => l.AjusteId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<AjusteLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
 
         // Notas crédito/débito
         modelBuilder.Entity<Nota>().HasIndex(n => n.TenantId);
