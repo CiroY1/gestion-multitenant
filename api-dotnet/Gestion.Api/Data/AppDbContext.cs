@@ -36,6 +36,8 @@ public class AppDbContext : DbContext
     public DbSet<AjusteLinea> AjusteLineas => Set<AjusteLinea>();
     public DbSet<Bodega> Bodegas => Set<Bodega>();
     public DbSet<ExistenciaBodega> ExistenciaBodegas => Set<ExistenciaBodega>();
+    public DbSet<Traslado> Traslados => Set<Traslado>();
+    public DbSet<TrasladoLinea> TrasladoLineas => Set<TrasladoLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -136,6 +138,22 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ExistenciaBodega>()
             .HasOne(e => e.Bodega).WithMany()
             .HasForeignKey(e => e.BodegaId).OnDelete(DeleteBehavior.Restrict);
+
+        // Traslados entre bodegas
+        modelBuilder.Entity<Traslado>().HasIndex(x => x.TenantId);
+        modelBuilder.Entity<Traslado>().HasIndex(x => new { x.TenantId, x.Numero });
+        modelBuilder.Entity<Traslado>()
+            .HasMany(x => x.Lineas).WithOne(l => l.Traslado!)
+            .HasForeignKey(l => l.TrasladoId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TrasladoLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Traslado>()
+            .HasOne(x => x.BodegaOrigen).WithMany()
+            .HasForeignKey(x => x.BodegaOrigenId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Traslado>()
+            .HasOne(x => x.BodegaDestino).WithMany()
+            .HasForeignKey(x => x.BodegaDestinoId).OnDelete(DeleteBehavior.Restrict);
 
         // Bodega en los movimientos y documentos (opcional, sin borrado en cascada).
         modelBuilder.Entity<MovimientoStock>()

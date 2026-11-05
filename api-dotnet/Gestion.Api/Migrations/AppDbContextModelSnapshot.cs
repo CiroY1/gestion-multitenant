@@ -832,6 +832,82 @@ namespace Gestion.Api.Migrations
                     b.ToTable("RemisionLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Traslado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BodegaDestinoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BodegaOrigenId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Observaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BodegaDestinoId");
+
+                    b.HasIndex("BodegaOrigenId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Numero");
+
+                    b.ToTable("Traslados");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.TrasladoLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrasladoId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("TrasladoId");
+
+                    b.ToTable("TrasladoLineas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Terceros.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -1181,6 +1257,44 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Remision");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Traslado", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "BodegaDestino")
+                        .WithMany()
+                        .HasForeignKey("BodegaDestinoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "BodegaOrigen")
+                        .WithMany()
+                        .HasForeignKey("BodegaOrigenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BodegaDestino");
+
+                    b.Navigation("BodegaOrigen");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.TrasladoLinea", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Traslado", "Traslado")
+                        .WithMany("Lineas")
+                        .HasForeignKey("TrasladoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Traslado");
+                });
+
             modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
                 {
                     b.Navigation("Usuarios");
@@ -1227,6 +1341,11 @@ namespace Gestion.Api.Migrations
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
+                {
+                    b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Traslado", b =>
                 {
                     b.Navigation("Lineas");
                 });
