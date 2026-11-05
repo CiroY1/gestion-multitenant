@@ -178,6 +178,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<MovimientoStock>()
             .HasOne(m => m.Bodega).WithMany()
             .HasForeignKey(m => m.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<MovimientoStock>()
+            .HasOne(m => m.Lote).WithMany()
+            .HasForeignKey(m => m.LoteId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RecepcionLinea>()
+            .HasOne(l => l.Lote).WithMany()
+            .HasForeignKey(l => l.LoteId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Recepcion>()
             .HasOne(r => r.Bodega).WithMany()
             .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);

@@ -368,6 +368,9 @@ namespace Gestion.Api.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("LoteId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductoId")
                         .HasColumnType("integer");
 
@@ -384,6 +387,8 @@ namespace Gestion.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BodegaId");
+
+                    b.HasIndex("LoteId");
 
                     b.HasIndex("ProductoId");
 
@@ -749,6 +754,9 @@ namespace Gestion.Api.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<int?>("LoteId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("OrdenCompraLineaId")
                         .HasColumnType("integer");
 
@@ -759,6 +767,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
 
                     b.HasIndex("OrdenCompraLineaId");
 
@@ -1163,6 +1173,11 @@ namespace Gestion.Api.Migrations
                         .HasForeignKey("BodegaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Gestion.Api.Inventario.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany("Movimientos")
                         .HasForeignKey("ProductoId")
@@ -1170,6 +1185,8 @@ namespace Gestion.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Bodega");
+
+                    b.Navigation("Lote");
 
                     b.Navigation("Producto");
                 });
@@ -1292,6 +1309,11 @@ namespace Gestion.Api.Migrations
 
             modelBuilder.Entity("Gestion.Api.Inventario.RecepcionLinea", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.OrdenCompraLinea", "OrdenCompraLinea")
                         .WithMany()
                         .HasForeignKey("OrdenCompraLineaId")
@@ -1308,6 +1330,8 @@ namespace Gestion.Api.Migrations
                         .HasForeignKey("RecepcionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Lote");
 
                     b.Navigation("OrdenCompraLinea");
 
