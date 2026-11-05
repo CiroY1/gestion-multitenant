@@ -92,6 +92,32 @@ export interface Inscripcion {
   bebeNombre: string
 }
 
+export interface Paquete {
+  id: number
+  nombre: string
+  sesiones: number
+  precio: number
+  activo: boolean
+}
+
+export interface NuevoPaquete {
+  nombre: string
+  sesiones: number
+  precio: number
+  activo?: boolean
+}
+
+export interface Bono {
+  id: number
+  clienteId: number | null
+  clienteNombre: string
+  paqueteNombre: string
+  sesionesTotal: number
+  sesionesRestantes: number
+  precio: number
+  creadoEn: string
+}
+
 export interface Trabajador {
   id: number
   nombre: string
@@ -292,5 +318,47 @@ export class SpaService {
     return this.http.delete<{ ok: boolean }>(
       `${this.base}/eventos/${eventoId}/inscripciones/${insId}`
     )
+  }
+
+  // --- Paquetes (catálogo de bonos) ---
+
+  getPaquetes(): Observable<Paquete[]> {
+    return this.http.get<Paquete[]>(`${this.base}/paquetes`)
+  }
+
+  crearPaquete(dto: NuevoPaquete): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/paquetes`, dto)
+  }
+
+  actualizarPaquete(id: number, dto: NuevoPaquete): Observable<{ ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(`${this.base}/paquetes/${id}`, dto)
+  }
+
+  eliminarPaquete(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/paquetes/${id}`)
+  }
+
+  // --- Bonos vendidos ---
+
+  getBonos(): Observable<Bono[]> {
+    return this.http.get<Bono[]>(`${this.base}/bonos`)
+  }
+
+  venderBono(clienteId: number, paqueteId: number): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/bonos`, {
+      clienteId,
+      paqueteId,
+    })
+  }
+
+  consumirBono(id: number): Observable<{ ok: boolean; restantes: number }> {
+    return this.http.post<{ ok: boolean; restantes: number }>(
+      `${this.base}/bonos/${id}/consumir`,
+      {}
+    )
+  }
+
+  eliminarBono(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/bonos/${id}`)
   }
 }

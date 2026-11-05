@@ -1,0 +1,151 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Paquetes'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-package"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Paquetes de sesiones</h5>
+              <small class="text-muted">Catálogo de bonos que se venden a los clientes</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirCrear()">
+              <i class="bx bx-plus me-1"></i>Nuevo paquete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Paquete</th>
+              <th class="text-center">Sesiones</th>
+              <th class="text-end">Precio</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="5" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="5" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (paquetes().length === 0) {
+              <tr><td colspan="5" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
+                      <i class="bx bx-package"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay paquetes</h5>
+                  <p class="text-muted mb-0">Crea el primero con "Nuevo paquete".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (p of paquetes(); track p.id) {
+                <tr>
+                  <td class="fw-medium">{{ p.nombre }}</td>
+                  <td class="text-center">{{ p.sesiones }}</td>
+                  <td class="text-end fw-semibold">$ {{ p.precio | number: '1.0-0' }}</td>
+                  <td class="text-center">
+                    @if (p.activo) {
+                      <span class="badge bg-success-subtle text-success">Activo</span>
+                    } @else {
+                      <span class="badge bg-light text-muted">Inactivo</span>
+                    }
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(p)" title="Editar">
+                      <i class="bx bx-edit fs-16"></i>
+                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && paquetes().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ paquetes().length }}</span>
+          {{ paquetes().length === 1 ? 'paquete' : 'paquetes' }}
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal: crear / editar paquete -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editId() ? 'Editar paquete' : 'Nuevo paquete' }}</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" [(ngModel)]="form.nombre" placeholder="Ej. 10 sesiones de hidroterapia" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Sesiones</label>
+              <input type="number" min="1" class="form-control" [(ngModel)]="form.sesiones" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Precio</label>
+              <input type="number" min="0" class="form-control" [(ngModel)]="form.precio" />
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="paqActivo" [(ngModel)]="form.activo" />
+                <label class="form-check-label" for="paqActivo">Activo</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
