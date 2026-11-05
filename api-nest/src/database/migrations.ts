@@ -29,4 +29,26 @@ export const MIGRACIONES: Migracion[] = [
         ON "SpaServicios" ("TenantId");
     `,
   },
+  {
+    id: '002_spa_citas',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "SpaCitas" (
+        "Id"             serial PRIMARY KEY,
+        "TenantId"       text NOT NULL,
+        "ServicioId"     integer NOT NULL,
+        "ServicioNombre" text NOT NULL,
+        "ClienteId"      integer NULL,
+        "ClienteNombre"  text NOT NULL,
+        "BebeNombre"     text NOT NULL DEFAULT '',
+        "FechaHora"      timestamptz NOT NULL,
+        "Estado"         text NOT NULL DEFAULT 'Programada',
+        "Notas"          text NOT NULL DEFAULT '',
+        "CreadoEn"       timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaCitas_TenantId"
+        ON "SpaCitas" ("TenantId");
+      CREATE INDEX IF NOT EXISTS "IX_SpaCitas_Agenda"
+        ON "SpaCitas" ("TenantId", "FechaHora");
+    `,
+  },
 ]

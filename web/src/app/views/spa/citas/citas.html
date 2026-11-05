@@ -1,0 +1,159 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Citas'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-calendar-heart"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Agenda de citas</h5>
+              <small class="text-muted">
+                Une un servicio (NestJS) con un cliente del maestro compartido (.NET)
+              </small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirForm()">
+              <i class="bx bx-plus me-1"></i>Nueva cita
+            </button>
+          </div>
+        </div>
+
+        @if (mostrarForm()) {
+          <div class="mt-3 p-3 rounded bg-light-subtle border">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Servicio</label>
+                <select class="form-select" [(ngModel)]="form.servicioId">
+                  @for (s of servicios(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.nombre }}</option>
+                  }
+                </select>
+                @if (servicios().length === 0) {
+                  <small class="text-muted">No hay servicios. Créalos en Servicios.</small>
+                }
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Cliente</label>
+                <select class="form-select" [(ngModel)]="form.clienteId">
+                  @for (c of clientes(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.nombre }}</option>
+                  }
+                </select>
+                @if (clientes().length === 0) {
+                  <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
+                }
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Bebé (opcional)</label>
+                <input class="form-control" [(ngModel)]="form.bebeNombre" placeholder="Nombre del bebé" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Fecha y hora</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="form.fechaHora" />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Notas (opcional)</label>
+                <input class="form-control" [(ngModel)]="form.notas" placeholder="Observaciones" />
+              </div>
+            </div>
+            <div class="mt-3 d-flex gap-2 justify-content-end">
+              <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+              <button class="btn btn-success" (click)="crear()" [disabled]="guardando()">
+                @if (guardando()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                Agendar cita
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Cliente</th>
+              <th>Bebé</th>
+              <th>Servicio</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="6" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (citas().length === 0) {
+              <tr><td colspan="6" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
+                      <i class="bx bx-calendar-heart"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Aún no hay citas</h5>
+                  <p class="text-muted mb-0">Agenda la primera con "Nueva cita".</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (c of citas(); track c.id) {
+                <tr>
+                  <td class="fw-medium">{{ c.fechaHora | date: 'short' }}</td>
+                  <td>{{ c.clienteNombre }}</td>
+                  <td class="text-muted">{{ c.bebeNombre || '—' }}</td>
+                  <td>{{ c.servicioNombre }}</td>
+                  <td class="text-center">
+                    <span class="badge {{ badge(c.estado) }}">{{ c.estado }}</span>
+                  </td>
+                  <td class="text-center text-nowrap">
+                    @if (procesando() === c.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else if (c.estado === 'Programada') {
+                      <button class="btn btn-sm btn-soft-success me-1" (click)="atender(c)" title="Marcar atendida">
+                        <i class="bx bx-check fs-16"></i>
+                      </button>
+                      <button class="btn btn-sm btn-soft-danger" (click)="cancelar(c)" title="Cancelar">
+                        <i class="bx bx-x-circle fs-16"></i>
+                      </button>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && citas().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ citas().length }}</span> cita(s) ·
+          <span class="fw-semibold">{{ programadas() }}</span> programada(s)
+        </div>
+      }
+    </div>
+  </div>
+</div>
