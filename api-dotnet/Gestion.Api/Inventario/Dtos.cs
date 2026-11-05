@@ -8,15 +8,15 @@ public record GuardarCategoriaDto(string Nombre);
 public record ProductoDto(
     int Id, string Nombre, string? Descripcion, decimal Precio, int Stock,
     decimal CostoPromedio, int CategoriaId, string? Categoria,
-    int? UnidadMedidaId, string? Unidad);
+    int? UnidadMedidaId, string? Unidad, bool RastreaLotes);
 
 public record CrearProductoDto(
     string Nombre, string? Descripcion, decimal Precio, int StockInicial, int CategoriaId,
-    int? UnidadMedidaId = null);
+    int? UnidadMedidaId = null, bool RastreaLotes = false);
 
 public record ActualizarProductoDto(
     string Nombre, string? Descripcion, decimal Precio, int CategoriaId,
-    int? UnidadMedidaId = null);
+    int? UnidadMedidaId = null, bool RastreaLotes = false);
 
 // --- Unidades de medida ---
 public record UnidadMedidaDto(int Id, string Nombre, string Abreviatura);
