@@ -61,6 +61,12 @@ export const MENU: MenuItem[] = [
         parentKey: 'inventario',
       },
       {
+        key: 'inventario-ordenes-compra',
+        label: 'Órdenes de compra',
+        link: '/inventario/ordenes-compra',
+        parentKey: 'inventario',
+      },
+      {
         key: 'inventario-recepciones',
         label: 'Recepciones',
         link: '/inventario/recepciones',
