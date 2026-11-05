@@ -104,6 +104,10 @@ export class Recepciones implements OnInit {
       })
   }
 
+  pdf(r: Recepcion): void {
+    this.inv.abrirPdf('recepciones', r.id, r.numero)
+  }
+
   confirmar(r: Recepcion): void {
     this.aviso.set(null)
     this.procesando.set(r.id)

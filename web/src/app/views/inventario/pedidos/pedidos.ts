@@ -126,6 +126,10 @@ export class PedidosVenta implements OnInit {
       })
   }
 
+  pdf(p: PedidoVenta): void {
+    this.inv.abrirPdf('pedidosventa', p.id, p.numero)
+  }
+
   // --- Estados ---
   aprobar(p: PedidoVenta): void {
     this.accion(p, this.inv.aprobarPedidoVenta(p.id))

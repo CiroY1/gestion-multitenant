@@ -121,6 +121,10 @@ export class OrdenesCompra implements OnInit {
       })
   }
 
+  pdf(o: OrdenCompra): void {
+    this.inv.abrirPdf('ordenescompra', o.id, o.numero)
+  }
+
   // --- Estados ---
   aprobar(o: OrdenCompra): void {
     this.accion(o, this.inv.aprobarOrdenCompra(o.id))

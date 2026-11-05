@@ -101,6 +101,10 @@ export class Remisiones implements OnInit {
       })
   }
 
+  pdf(r: Remision): void {
+    this.inv.abrirPdf('remisiones', r.id, r.numero)
+  }
+
   confirmar(r: Remision): void {
     this.aviso.set(null)
     this.procesando.set(r.id)

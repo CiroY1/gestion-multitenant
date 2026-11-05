@@ -339,6 +339,20 @@ export class InventarioService {
     return this.http.get<Kardex>(`${this.base}/kardex/${productoId}`)
   }
 
+  /** Descarga el PDF de un documento (el interceptor agrega el token). */
+  abrirPdf(recurso: string, id: number, nombre: string): void {
+    this.http
+      .get(`${this.base}/documentos/${recurso}/${id}/pdf`, { responseType: 'blob' })
+      .subscribe((blob) => {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${nombre}.pdf`
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(url), 5000)
+      })
+  }
+
   getNotas(): Observable<Nota[]> {
     return this.http.get<Nota[]>(`${this.base}/notas`)
   }

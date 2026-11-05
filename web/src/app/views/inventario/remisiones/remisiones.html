@@ -152,6 +152,9 @@
                     }
                   </td>
                   <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-info me-1" (click)="pdf(r)" title="PDF">
+                      <i class="bx bxs-file-pdf fs-16"></i>
+                    </button>
                     @if (procesando() === r.id) {
                       <span class="spinner-border spinner-border-sm"></span>
                     } @else {
