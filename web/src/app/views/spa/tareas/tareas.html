@@ -87,19 +87,21 @@
                   <td class="text-center text-nowrap">
                     @if (procesando() === t.id) {
                       <span class="spinner-border spinner-border-sm"></span>
-                    } @else {
+                    } @else if (t.estado === 'Hecha') {
+                      <span class="text-muted">—</span>
+                    } @else if (puedeCambiar(t)) {
                       @if (t.estado === 'Pendiente') {
                         <button class="btn btn-sm btn-soft-info me-1" (click)="iniciar(t)" title="Iniciar">
                           <i class="bx bx-play fs-16"></i>
                         </button>
                       }
-                      @if (t.estado !== 'Hecha') {
-                        <button class="btn btn-sm btn-soft-success" (click)="completar(t)" title="Completar">
-                          <i class="bx bx-check fs-16"></i>
-                        </button>
-                      } @else {
-                        <span class="text-muted">—</span>
-                      }
+                      <button class="btn btn-sm btn-soft-success" (click)="completar(t)" title="Completar">
+                        <i class="bx bx-check fs-16"></i>
+                      </button>
+                    } @else {
+                      <span class="text-muted" title="Solo el trabajador asignado o un administrador puede cambiarla">
+                        <i class="bx bx-lock-alt fs-16"></i>
+                      </span>
                     }
                   </td>
                 </tr>
@@ -137,11 +139,11 @@
             <div class="col-md-4">
               <label class="form-label">Trabajador</label>
               <select class="form-select" [(ngModel)]="form.trabajadorId">
-                @for (t of trabajadores(); track t.id) {
+                @for (t of activos(); track t.id) {
                   <option [ngValue]="t.id">{{ t.nombre }}</option>
                 }
               </select>
-              @if (trabajadores().length === 0) {
+              @if (activos().length === 0) {
                 <small class="text-muted">No hay trabajadores activos. Créalos en Trabajadores.</small>
               }
             </div>

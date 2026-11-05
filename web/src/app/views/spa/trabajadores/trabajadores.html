@@ -40,19 +40,20 @@
             <tr>
               <th>Nombre</th>
               <th>Rol</th>
+              <th>Email</th>
               <th class="text-center">Estado</th>
               <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="4" class="text-center text-muted py-5">
+              <tr><td colspan="5" class="text-center text-muted py-5">
                 <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
               </td></tr>
             } @else if (error()) {
-              <tr><td colspan="4" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+              <tr><td colspan="5" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (trabajadores().length === 0) {
-              <tr><td colspan="4" class="py-5">
+              <tr><td colspan="5" class="py-5">
                 <div class="text-center">
                   <div class="avatar-lg mx-auto mb-3">
                     <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
@@ -68,6 +69,7 @@
                 <tr>
                   <td class="fw-medium">{{ t.nombre }}</td>
                   <td class="text-muted">{{ t.rol || '—' }}</td>
+                  <td class="text-muted">{{ t.email || '—' }}</td>
                   <td class="text-center">
                     @if (t.activo) {
                       <span class="badge bg-success-subtle text-success">Activo</span>
@@ -79,9 +81,11 @@
                     <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(t)" title="Editar">
                       <i class="bx bx-edit fs-16"></i>
                     </button>
-                    <button class="btn btn-sm btn-soft-danger" (click)="eliminar(t)" title="Eliminar">
-                      <i class="bx bx-trash fs-16"></i>
-                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(t)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
                   </td>
                 </tr>
               }
@@ -117,6 +121,10 @@
             <div class="col-md-5">
               <label class="form-label">Rol</label>
               <input class="form-control" [(ngModel)]="form.rol" placeholder="Ej. Terapeuta" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Email (vincula su usuario para sus tareas)</label>
+              <input class="form-control" type="email" [(ngModel)]="form.email" placeholder="correo@empresa.com" />
             </div>
             <div class="col-12">
               <div class="form-check form-switch">

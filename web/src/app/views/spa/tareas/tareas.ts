@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SpaService, type Tarea, type Trabajador } from '../spa.service'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-spa-tareas',
@@ -12,6 +13,14 @@ import { SpaService, type Tarea, type Trabajador } from '../spa.service'
 })
 export class Tareas implements OnInit {
   private spa = inject(SpaService)
+  private auth = inject(AuthenticationService)
+
+  get esAdmin(): boolean {
+    return this.auth.esAdmin
+  }
+  private get miEmail(): string {
+    return (this.auth.usuario?.email ?? '').toLowerCase()
+  }
 
   tareas = signal<Tarea[]>([])
   trabajadores = signal<Trabajador[]>([])
@@ -30,12 +39,22 @@ export class Tareas implements OnInit {
     () => this.tareas().filter((t) => t.estado !== 'Hecha').length
   )
 
+  /** Trabajadores activos (para asignar en el formulario). */
+  activos = computed(() => this.trabajadores().filter((t) => t.activo))
+
   ngOnInit(): void {
     this.spa.getTrabajadores().subscribe({
-      next: (d) => this.trabajadores.set(d.filter((t) => t.activo)),
+      next: (d) => this.trabajadores.set(d),
       error: () => {},
     })
     this.cargar()
+  }
+
+  /** Solo el admin o el trabajador asignado (vinculado por email) puede cambiar la tarea. */
+  puedeCambiar(t: Tarea): boolean {
+    if (this.esAdmin) return true
+    const w = this.trabajadores().find((x) => x.id === t.trabajadorId)
+    return !!w?.email && w.email.toLowerCase() === this.miEmail
   }
 
   cargar(): void {
@@ -60,7 +79,7 @@ export class Tareas implements OnInit {
   abrirForm(): void {
     this.form = {
       titulo: '',
-      trabajadorId: this.trabajadores()[0]?.id ?? 0,
+      trabajadorId: this.activos()[0]?.id ?? 0,
       fechaHora: '',
       notas: '',
     }

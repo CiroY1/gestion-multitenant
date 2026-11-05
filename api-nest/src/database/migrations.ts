@@ -86,4 +86,11 @@ export const MIGRACIONES: Migracion[] = [
         ON "SpaTareas" ("TenantId", "TrabajadorId");
     `,
   },
+  {
+    id: '005_spa_trabajador_email',
+    sql: `
+      ALTER TABLE "SpaTrabajadores"
+        ADD COLUMN IF NOT EXISTS "Email" text NOT NULL DEFAULT '';
+    `,
+  },
 ]

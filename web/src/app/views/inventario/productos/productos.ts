@@ -9,6 +9,7 @@ import {
   type Producto,
   type UnidadMedida,
 } from '../inventario.service'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-inventario-productos',
@@ -18,6 +19,11 @@ import {
 })
 export class Productos implements OnInit {
   private inv = inject(InventarioService)
+  private auth = inject(AuthenticationService)
+
+  get esAdmin(): boolean {
+    return this.auth.esAdmin
+  }
 
   productos = signal<Producto[]>([])
   categorias = signal<Categoria[]>([])

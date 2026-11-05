@@ -105,9 +105,11 @@
                     <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(p)" title="Editar">
                       <i class="bx bx-edit fs-16"></i>
                     </button>
-                    <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
-                      <i class="bx bx-trash fs-16"></i>
-                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
                   </td>
                 </tr>
               }
