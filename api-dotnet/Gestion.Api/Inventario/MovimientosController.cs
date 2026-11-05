@@ -48,10 +48,13 @@ public class MovimientosController : ControllerBase
             .FirstOrDefaultAsync(p => p.Id == dto.ProductoId && p.TenantId == t);
         if (producto is null) return NotFound("El producto no existe.");
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         // Movimiento manual al costo promedio vigente (entrada o salida), centralizado.
-        var res = await _kardex.MoverAsync(producto.Id, t, dto.Tipo, dto.Cantidad,
+        var res = await _kardex.MoverAsync(producto.Id, t, bodega.Value, dto.Tipo, dto.Cantidad,
             null, "MAN", null, "Movimiento manual");
         if (!res.Ok)
             return BadRequest($"Stock insuficiente. Disponible: {producto.Stock}.");

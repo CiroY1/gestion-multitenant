@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import {
   InventarioService,
+  type Bodega,
   type Producto,
   type Recepcion,
 } from '../inventario.service'
@@ -28,6 +29,7 @@ export class Recepciones implements OnInit {
   recepciones = signal<Recepcion[]>([])
   productos = signal<Producto[]>([])
   proveedores = signal<Proveedor[]>([])
+  bodegas = signal<Bodega[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -38,6 +40,7 @@ export class Recepciones implements OnInit {
 
   proveedor = ''
   observaciones = ''
+  bodegaId: number | null = null
   lineas: LineaForm[] = []
 
   get total(): number {
@@ -52,6 +55,10 @@ export class Recepciones implements OnInit {
     })
     this.terceros.getProveedores().subscribe({
       next: (p) => this.proveedores.set(p),
+      error: () => {},
+    })
+    this.inv.getBodegas().subscribe({
+      next: (b) => this.bodegas.set(b.filter((x) => x.activa)),
       error: () => {},
     })
   }
@@ -74,6 +81,7 @@ export class Recepciones implements OnInit {
   abrirForm(): void {
     this.proveedor = ''
     this.observaciones = ''
+    this.bodegaId = this.bodegas()[0]?.id ?? null
     this.lineas = [
       { productoId: this.productos()[0]?.id ?? 0, cantidad: 1, costoUnitario: 0 },
     ]
@@ -99,6 +107,7 @@ export class Recepciones implements OnInit {
       .crearRecepcion({
         proveedor: this.proveedor,
         observaciones: this.observaciones,
+        bodegaId: this.bodegaId ?? undefined,
         lineas: this.lineas,
       })
       .subscribe({

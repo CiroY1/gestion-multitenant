@@ -2,7 +2,7 @@ namespace Gestion.Api.Inventario.Dtos;
 
 // Entrada
 public record CrearRemisionLineaDto(int ProductoId, int Cantidad, int? PedidoVentaLineaId = null);
-public record CrearRemisionDto(string Cliente, string? Observaciones, List<CrearRemisionLineaDto> Lineas, int? PedidoVentaId = null);
+public record CrearRemisionDto(string Cliente, string? Observaciones, List<CrearRemisionLineaDto> Lineas, int? PedidoVentaId = null, int? BodegaId = null);
 
 // Salida
 public record RemisionDto(

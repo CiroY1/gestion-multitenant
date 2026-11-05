@@ -26,6 +26,10 @@ public class Remision
     public int? PedidoVentaId { get; set; }
     public PedidoVenta? PedidoVenta { get; set; }
 
+    /// <summary>Bodega desde la que sale la mercancía.</summary>
+    public int? BodegaId { get; set; }
+    public Bodega? Bodega { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<RemisionLinea> Lineas { get; set; } = new List<RemisionLinea>();

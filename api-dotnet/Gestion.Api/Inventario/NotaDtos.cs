@@ -2,7 +2,7 @@ namespace Gestion.Api.Inventario.Dtos;
 
 // Entrada
 public record CrearNotaLineaDto(int ProductoId, int Cantidad);
-public record CrearNotaDto(TipoNota Tipo, int DocumentoOrigenId, string? Motivo, List<CrearNotaLineaDto> Lineas);
+public record CrearNotaDto(TipoNota Tipo, int DocumentoOrigenId, string? Motivo, List<CrearNotaLineaDto> Lineas, int? BodegaId = null);
 
 // Salida
 public record NotaLineaDto(int ProductoId, string? Producto, int Cantidad, decimal CostoUnitario);

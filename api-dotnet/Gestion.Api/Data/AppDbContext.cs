@@ -34,6 +34,10 @@ public class AppDbContext : DbContext
     public DbSet<PedidoVentaLinea> PedidoVentaLineas => Set<PedidoVentaLinea>();
     public DbSet<Ajuste> Ajustes => Set<Ajuste>();
     public DbSet<AjusteLinea> AjusteLineas => Set<AjusteLinea>();
+    public DbSet<Bodega> Bodegas => Set<Bodega>();
+    public DbSet<ExistenciaBodega> ExistenciaBodegas => Set<ExistenciaBodega>();
+    public DbSet<Traslado> Traslados => Set<Traslado>();
+    public DbSet<TrasladoLinea> TrasladoLineas => Set<TrasladoLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -123,6 +127,50 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RecetaIngrediente>()
             .HasOne(i => i.Producto).WithMany()
             .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Bodegas y existencias
+        modelBuilder.Entity<Bodega>().HasIndex(b => b.TenantId);
+        modelBuilder.Entity<ExistenciaBodega>()
+            .HasIndex(e => new { e.TenantId, e.ProductoId, e.BodegaId }).IsUnique();
+        modelBuilder.Entity<ExistenciaBodega>()
+            .HasOne(e => e.Producto).WithMany()
+            .HasForeignKey(e => e.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ExistenciaBodega>()
+            .HasOne(e => e.Bodega).WithMany()
+            .HasForeignKey(e => e.BodegaId).OnDelete(DeleteBehavior.Restrict);
+
+        // Traslados entre bodegas
+        modelBuilder.Entity<Traslado>().HasIndex(x => x.TenantId);
+        modelBuilder.Entity<Traslado>().HasIndex(x => new { x.TenantId, x.Numero });
+        modelBuilder.Entity<Traslado>()
+            .HasMany(x => x.Lineas).WithOne(l => l.Traslado!)
+            .HasForeignKey(l => l.TrasladoId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TrasladoLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Traslado>()
+            .HasOne(x => x.BodegaOrigen).WithMany()
+            .HasForeignKey(x => x.BodegaOrigenId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Traslado>()
+            .HasOne(x => x.BodegaDestino).WithMany()
+            .HasForeignKey(x => x.BodegaDestinoId).OnDelete(DeleteBehavior.Restrict);
+
+        // Bodega en los movimientos y documentos (opcional, sin borrado en cascada).
+        modelBuilder.Entity<MovimientoStock>()
+            .HasOne(m => m.Bodega).WithMany()
+            .HasForeignKey(m => m.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Recepcion>()
+            .HasOne(r => r.Bodega).WithMany()
+            .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Remision>()
+            .HasOne(r => r.Bodega).WithMany()
+            .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Ajuste>()
+            .HasOne(a => a.Bodega).WithMany()
+            .HasForeignKey(a => a.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Nota>()
+            .HasOne(n => n.Bodega).WithMany()
+            .HasForeignKey(n => n.BodegaId).OnDelete(DeleteBehavior.Restrict);
 
         // Ajustes de inventario
         modelBuilder.Entity<Ajuste>().HasIndex(a => a.TenantId);

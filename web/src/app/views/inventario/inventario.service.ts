@@ -163,6 +163,31 @@ export interface Receta {
   ingredientes: number
 }
 
+export interface Bodega {
+  id: number
+  nombre: string
+  codigo?: string
+  activa: boolean
+}
+
+export interface Existencia {
+  productoId: number
+  producto: string
+  bodegaId: number
+  bodega: string
+  stock: number
+}
+
+export interface Traslado {
+  id: number
+  numero: string
+  bodegaOrigen: string
+  bodegaDestino: string
+  fecha: string
+  estado: EstadoDocumento
+  items: number
+}
+
 export interface Ajuste {
   id: number
   numero: string
@@ -241,6 +266,7 @@ export class InventarioService {
     proveedor: string
     observaciones?: string
     ordenCompraId?: number
+    bodegaId?: number
     lineas: {
       productoId: number
       cantidad: number
@@ -295,6 +321,7 @@ export class InventarioService {
     cliente: string
     observaciones?: string
     pedidoVentaId?: number
+    bodegaId?: number
     lineas: { productoId: number; cantidad: number; pedidoVentaLineaId?: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/remisiones`, dto)
@@ -348,6 +375,44 @@ export class InventarioService {
     return this.http.get<Kardex>(`${this.base}/kardex/${productoId}`)
   }
 
+  // --- Bodegas / existencias ---
+  getBodegas(): Observable<Bodega[]> {
+    return this.http.get<Bodega[]>(`${this.base}/bodegas`)
+  }
+  crearBodega(dto: { nombre: string; codigo?: string; activa: boolean }): Observable<Bodega> {
+    return this.http.post<Bodega>(`${this.base}/bodegas`, dto)
+  }
+  actualizarBodega(id: number, dto: { nombre: string; codigo?: string; activa: boolean }): Observable<unknown> {
+    return this.http.put(`${this.base}/bodegas/${id}`, dto)
+  }
+  getExistencias(bodegaId?: number, productoId?: number): Observable<Existencia[]> {
+    let url = `${this.base}/bodegas/existencias`
+    const q: string[] = []
+    if (bodegaId) q.push(`bodegaId=${bodegaId}`)
+    if (productoId) q.push(`productoId=${productoId}`)
+    if (q.length) url += `?${q.join('&')}`
+    return this.http.get<Existencia[]>(url)
+  }
+
+  // --- Traslados ---
+  getTraslados(): Observable<Traslado[]> {
+    return this.http.get<Traslado[]>(`${this.base}/traslados`)
+  }
+  crearTraslado(dto: {
+    bodegaOrigenId: number
+    bodegaDestinoId: number
+    observaciones?: string
+    lineas: { productoId: number; cantidad: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/traslados`, dto)
+  }
+  confirmarTraslado(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/traslados/${id}/confirmar`, {})
+  }
+  anularTraslado(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/traslados/${id}/anular`, {})
+  }
+
   /** Descarga el PDF de un documento (el interceptor agrega el token). */
   abrirPdf(recurso: string, id: number, nombre: string): void {
     this.http
@@ -368,6 +433,7 @@ export class InventarioService {
 
   crearAjuste(dto: {
     motivo: string
+    bodegaId?: number
     lineas: { productoId: number; tipo: 'Entrada' | 'Salida'; cantidad: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/ajustes`, dto)
@@ -389,6 +455,7 @@ export class InventarioService {
     tipo: TipoNota
     documentoOrigenId: number
     motivo?: string
+    bodegaId?: number
     lineas: { productoId: number; cantidad: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/notas`, dto)
@@ -414,8 +481,8 @@ export class InventarioService {
     return this.http.post(`${this.base}/recetas`, dto)
   }
 
-  producir(recetaId: number, cantidad: number): Observable<unknown> {
-    return this.http.post(`${this.base}/recetas/${recetaId}/producir`, { cantidad })
+  producir(recetaId: number, cantidad: number, bodegaId?: number): Observable<unknown> {
+    return this.http.post(`${this.base}/recetas/${recetaId}/producir`, { cantidad, bodegaId })
   }
 
   registrarMovimiento(dto: {

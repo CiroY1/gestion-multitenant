@@ -110,6 +110,10 @@ public class RecetasController : ControllerBase
             .Where(p => p.TenantId == t)
             .ToDictionaryAsync(p => p.Id, p => p.Nombre);
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+        var bod = bodega.Value;
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         decimal costoTotal = 0m;
@@ -118,7 +122,7 @@ public class RecetasController : ControllerBase
             var requerido = ing.Cantidad * dto.Cantidad;
 
             // Consumo del insumo: salida al costo promedio, con guardia de stock.
-            var res = await _kardex.MoverAsync(ing.ProductoId, t, TipoMovimiento.Salida, requerido,
+            var res = await _kardex.MoverAsync(ing.ProductoId, t, bod, TipoMovimiento.Salida, requerido,
                 null, "PROD", null, $"Consumo producción: {receta.Nombre}");
             if (!res.Ok)
             {
@@ -130,7 +134,7 @@ public class RecetasController : ControllerBase
 
         // Producto terminado: entra con el costo de los insumos consumidos.
         var costoUnitario = dto.Cantidad > 0 ? costoTotal / dto.Cantidad : 0m;
-        await _kardex.MoverAsync(receta.ProductoFinalId, t, TipoMovimiento.Entrada, dto.Cantidad,
+        await _kardex.MoverAsync(receta.ProductoFinalId, t, bod, TipoMovimiento.Entrada, dto.Cantidad,
             costoUnitario, "PROD", null, $"Producción: {receta.Nombre}");
 
         await _db.SaveChangesAsync();

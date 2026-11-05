@@ -101,6 +101,9 @@ public class RecepcionesController : ControllerBase
             }
         }
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         // Se crea como BORRADOR: no se mueve stock hasta confirmar.
@@ -112,6 +115,7 @@ public class RecepcionesController : ControllerBase
             Fecha = DateTime.UtcNow,
             Estado = EstadoDocumento.Borrador,
             OrdenCompraId = orden?.Id,
+            BodegaId = bodega,
             TenantId = t,
         };
 
@@ -147,10 +151,13 @@ public class RecepcionesController : ControllerBase
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
+        var bod = r.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null);
+        if (bod is null) return BadRequest("No hay bodega para el movimiento.");
+
         foreach (var l in r.Lineas)
         {
             // Entrada con costo de compra: actualiza el costo promedio del producto.
-            await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+            await _kardex.MoverAsync(l.ProductoId, t, bod.Value, TipoMovimiento.Entrada, l.Cantidad,
                 l.CostoUnitario, "REC", r.Numero, "Recepción de mercancía");
         }
 
@@ -182,10 +189,11 @@ public class RecepcionesController : ControllerBase
         // Si estaba confirmada, revertir el stock que había sumado.
         if (r.Estado == EstadoDocumento.Confirmado)
         {
+            var bod = r.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null) ?? 0;
             foreach (var l in r.Lineas)
             {
                 // Revertir la entrada: salida al costo promedio, con guardia de stock.
-                var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                var res = await _kardex.MoverAsync(l.ProductoId, t, bod, TipoMovimiento.Salida, l.Cantidad,
                     null, "REC", r.Numero, "Anulación de recepción");
                 if (!res.Ok)
                 {

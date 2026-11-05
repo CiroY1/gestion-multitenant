@@ -26,6 +26,10 @@ public class Recepcion
     public int? OrdenCompraId { get; set; }
     public OrdenCompra? OrdenCompra { get; set; }
 
+    /// <summary>Bodega a la que entra la mercancía.</summary>
+    public int? BodegaId { get; set; }
+    public Bodega? Bodega { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<RecepcionLinea> Lineas { get; set; } = new List<RecepcionLinea>();

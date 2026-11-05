@@ -21,6 +21,10 @@ public class MovimientoStock
     public TipoMovimiento Tipo { get; set; }
     public int Cantidad { get; set; }
 
+    /// <summary>Bodega afectada por el movimiento.</summary>
+    public int? BodegaId { get; set; }
+    public Bodega? Bodega { get; set; }
+
     /// <summary>Costo unitario del movimiento (compra en entradas; costo promedio en salidas).</summary>
     public decimal CostoUnitario { get; set; }
 

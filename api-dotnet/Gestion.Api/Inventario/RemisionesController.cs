@@ -99,6 +99,9 @@ public class RemisionesController : ControllerBase
             }
         }
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         // Se crea como BORRADOR: no se descuenta stock hasta confirmar.
@@ -110,6 +113,7 @@ public class RemisionesController : ControllerBase
             Fecha = DateTime.UtcNow,
             Estado = EstadoDocumento.Borrador,
             PedidoVentaId = pedido?.Id,
+            BodegaId = bodega,
             TenantId = t,
         };
 
@@ -144,10 +148,13 @@ public class RemisionesController : ControllerBase
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
+        var bod = r.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null);
+        if (bod is null) return BadRequest("No hay bodega para el movimiento.");
+
         foreach (var l in r.Lineas)
         {
             // Salida al costo promedio, con guardia de stock suficiente.
-            var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+            var res = await _kardex.MoverAsync(l.ProductoId, t, bod.Value, TipoMovimiento.Salida, l.Cantidad,
                 null, "REM", r.Numero, "Remisión de salida");
             if (!res.Ok)
             {
@@ -185,10 +192,11 @@ public class RemisionesController : ControllerBase
         // Si estaba confirmada, devolver al stock lo que había descontado.
         if (r.Estado == EstadoDocumento.Confirmado)
         {
+            var bod = r.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null) ?? 0;
             foreach (var l in r.Lineas)
             {
                 // Revertir la salida: entrada al costo promedio (devuelve el stock).
-                await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                await _kardex.MoverAsync(l.ProductoId, t, bod, TipoMovimiento.Entrada, l.Cantidad,
                     null, "REM", r.Numero, "Anulación de remisión");
             }
 

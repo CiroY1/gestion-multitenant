@@ -17,7 +17,7 @@ public record ActualizarProductoDto(
 
 // --- Movimientos de stock ---
 public record MovimientoDto(int Id, int ProductoId, string Tipo, int Cantidad, DateTime Fecha);
-public record CrearMovimientoDto(int ProductoId, TipoMovimiento Tipo, int Cantidad);
+public record CrearMovimientoDto(int ProductoId, TipoMovimiento Tipo, int Cantidad, int? BodegaId = null);
 
 // --- Kardex ---
 public record KardexLineaDto(

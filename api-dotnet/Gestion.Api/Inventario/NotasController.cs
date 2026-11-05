@@ -123,6 +123,10 @@ public class NotasController : ControllerBase
             nota.RecepcionId = rec.Id;
         }
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+        nota.BodegaId = bodega;
+
         await using var tx = await _db.Database.BeginTransactionAsync();
         nota.Numero = await _consecutivos.SiguienteAsync(t, dto.Tipo == TipoNota.Credito ? "NC" : "ND");
         _db.Notas.Add(nota);
@@ -143,6 +147,9 @@ public class NotasController : ControllerBase
         if (n.Estado != EstadoDocumento.Borrador)
             return BadRequest("Solo se puede confirmar una nota en borrador.");
 
+        var bod = n.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null);
+        if (bod is null) return BadRequest("No hay bodega para el movimiento.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         foreach (var l in n.Lineas)
@@ -150,13 +157,13 @@ public class NotasController : ControllerBase
             if (n.Tipo == TipoNota.Credito)
             {
                 // Devolución de cliente: la mercancía regresa (entra al costo promedio).
-                await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                await _kardex.MoverAsync(l.ProductoId, t, bod.Value, TipoMovimiento.Entrada, l.Cantidad,
                     null, "NC", n.Numero, "Devolución de cliente");
             }
             else
             {
                 // Devolución a proveedor: la mercancía sale (al costo promedio, con guardia).
-                var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                var res = await _kardex.MoverAsync(l.ProductoId, t, bod.Value, TipoMovimiento.Salida, l.Cantidad,
                     null, "ND", n.Numero, "Devolución a proveedor");
                 if (!res.Ok)
                 {
@@ -188,12 +195,13 @@ public class NotasController : ControllerBase
 
         if (n.Estado == EstadoDocumento.Confirmado)
         {
+            var bod = n.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null) ?? 0;
             foreach (var l in n.Lineas)
             {
                 if (n.Tipo == TipoNota.Credito)
                 {
                     // Revertir la entrada: vuelve a salir (al costo promedio, con guardia).
-                    var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                    var res = await _kardex.MoverAsync(l.ProductoId, t, bod, TipoMovimiento.Salida, l.Cantidad,
                         null, "NC", n.Numero, "Anulación de nota crédito");
                     if (!res.Ok)
                     {
@@ -204,7 +212,7 @@ public class NotasController : ControllerBase
                 else
                 {
                     // Revertir la salida: vuelve a entrar (al costo promedio).
-                    await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                    await _kardex.MoverAsync(l.ProductoId, t, bod, TipoMovimiento.Entrada, l.Cantidad,
                         null, "ND", n.Numero, "Anulación de nota débito");
                 }
             }

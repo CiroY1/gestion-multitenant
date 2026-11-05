@@ -3,7 +3,7 @@ namespace Gestion.Api.Inventario.Dtos;
 // Entrada
 public record CrearRecetaIngredienteDto(int ProductoId, int Cantidad);
 public record CrearRecetaDto(string Nombre, int ProductoFinalId, List<CrearRecetaIngredienteDto> Ingredientes);
-public record ProducirDto(int Cantidad);
+public record ProducirDto(int Cantidad, int? BodegaId = null);
 
 // Salida
 public record RecetaDto(int Id, string Nombre, int ProductoFinalId, string? ProductoFinal, int Ingredientes);
