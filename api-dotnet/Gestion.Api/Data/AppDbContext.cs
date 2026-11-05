@@ -28,6 +28,8 @@ public class AppDbContext : DbContext
     public DbSet<Consecutivo> Consecutivos => Set<Consecutivo>();
     public DbSet<Nota> Notas => Set<Nota>();
     public DbSet<NotaLinea> NotaLineas => Set<NotaLinea>();
+    public DbSet<OrdenCompra> OrdenesCompra => Set<OrdenCompra>();
+    public DbSet<OrdenCompraLinea> OrdenCompraLineas => Set<OrdenCompraLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -53,6 +55,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Consecutivo>()
             .HasIndex(c => new { c.TenantId, c.TipoDocumento }).IsUnique();
 
+        // Órdenes de compra
+        modelBuilder.Entity<OrdenCompra>().HasIndex(o => o.TenantId);
+        modelBuilder.Entity<OrdenCompra>().HasIndex(o => new { o.TenantId, o.Numero });
+        modelBuilder.Entity<OrdenCompraLinea>().Property(l => l.CostoUnitario).HasPrecision(12, 2);
+        modelBuilder.Entity<OrdenCompra>()
+            .HasMany(o => o.Lineas).WithOne(l => l.OrdenCompra!)
+            .HasForeignKey(l => l.OrdenCompraId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OrdenCompraLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
         // Recepciones
         modelBuilder.Entity<Recepcion>().HasIndex(r => r.TenantId);
         modelBuilder.Entity<Recepcion>().HasIndex(r => new { r.TenantId, r.Numero });
@@ -62,6 +75,12 @@ public class AppDbContext : DbContext
             .WithOne(l => l.Recepcion!)
             .HasForeignKey(l => l.RecepcionId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Recepcion>()
+            .HasOne(r => r.OrdenCompra).WithMany()
+            .HasForeignKey(r => r.OrdenCompraId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RecepcionLinea>()
+            .HasOne(l => l.OrdenCompraLinea).WithMany()
+            .HasForeignKey(l => l.OrdenCompraLineaId).OnDelete(DeleteBehavior.Restrict);
 
         // Remisiones
         modelBuilder.Entity<Remision>().HasIndex(r => r.TenantId);

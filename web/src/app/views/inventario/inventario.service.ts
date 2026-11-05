@@ -60,6 +60,47 @@ export interface Recepcion {
   estado: EstadoDocumento
   total: number
   items: number
+  ordenCompra?: string
+}
+
+export type EstadoOrden =
+  | 'Borrador'
+  | 'Aprobada'
+  | 'Parcial'
+  | 'Recibida'
+  | 'Cerrada'
+  | 'Anulada'
+
+export interface OrdenCompra {
+  id: number
+  numero: string
+  proveedor: string
+  observaciones?: string
+  fecha: string
+  estado: EstadoOrden
+  total: number
+  items: number
+  pendiente: number
+}
+
+export interface OrdenLinea {
+  lineaId: number
+  productoId: number
+  producto?: string
+  cantidad: number
+  costoUnitario: number
+  recibida: number
+  pendiente: number
+}
+
+export interface OrdenCompraDetalle {
+  id: number
+  numero: string
+  proveedor: string
+  observaciones?: string
+  fecha: string
+  estado: EstadoOrden
+  lineas: OrdenLinea[]
 }
 
 export interface Remision {
@@ -149,9 +190,43 @@ export class InventarioService {
   crearRecepcion(dto: {
     proveedor: string
     observaciones?: string
-    lineas: { productoId: number; cantidad: number; costoUnitario: number }[]
+    ordenCompraId?: number
+    lineas: {
+      productoId: number
+      cantidad: number
+      costoUnitario: number
+      ordenCompraLineaId?: number
+    }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/recepciones`, dto)
+  }
+
+  getOrdenesCompra(): Observable<OrdenCompra[]> {
+    return this.http.get<OrdenCompra[]>(`${this.base}/ordenescompra`)
+  }
+
+  getOrdenCompra(id: number): Observable<OrdenCompraDetalle> {
+    return this.http.get<OrdenCompraDetalle>(`${this.base}/ordenescompra/${id}`)
+  }
+
+  crearOrdenCompra(dto: {
+    proveedor: string
+    observaciones?: string
+    lineas: { productoId: number; cantidad: number; costoUnitario: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/ordenescompra`, dto)
+  }
+
+  aprobarOrdenCompra(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/ordenescompra/${id}/aprobar`, {})
+  }
+
+  cerrarOrdenCompra(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/ordenescompra/${id}/cerrar`, {})
+  }
+
+  anularOrdenCompra(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/ordenescompra/${id}/anular`, {})
   }
 
   confirmarRecepcion(id: number): Observable<unknown> {

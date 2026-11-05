@@ -22,6 +22,10 @@ public class Recepcion
     public DateTime? FechaConfirmacion { get; set; }
     public DateTime? FechaAnulacion { get; set; }
 
+    /// <summary>Orden de compra origen (si la recepción se hace contra una OC).</summary>
+    public int? OrdenCompraId { get; set; }
+    public OrdenCompra? OrdenCompra { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<RecepcionLinea> Lineas { get; set; } = new List<RecepcionLinea>();
@@ -40,4 +44,8 @@ public class RecepcionLinea
 
     public int Cantidad { get; set; }
     public decimal CostoUnitario { get; set; }
+
+    /// <summary>Línea de la orden de compra que esta recepción abastece (si aplica).</summary>
+    public int? OrdenCompraLineaId { get; set; }
+    public OrdenCompraLinea? OrdenCompraLinea { get; set; }
 }

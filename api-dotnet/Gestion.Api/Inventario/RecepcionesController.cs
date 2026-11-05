@@ -37,7 +37,8 @@ public class RecepcionesController : ControllerBase
             .Select(r => new RecepcionDto(
                 r.Id, r.Numero, r.Proveedor, r.Observaciones, r.Fecha, r.Estado,
                 r.Lineas.Sum(l => l.Cantidad * l.CostoUnitario),
-                r.Lineas.Count))
+                r.Lineas.Count,
+                r.OrdenCompra != null ? r.OrdenCompra.Numero : null))
             .ToListAsync();
         return Ok(items);
     }
@@ -77,6 +78,29 @@ public class RecepcionesController : ControllerBase
         if (ids.Any(id => !productos.Contains(id)))
             return BadRequest("Uno o más productos no existen.");
 
+        // Si la recepción es contra una orden de compra, validar la orden y sus líneas.
+        OrdenCompra? orden = null;
+        if (dto.OrdenCompraId is int ocId)
+        {
+            orden = await _db.OrdenesCompra
+                .Include(o => o.Lineas)
+                .FirstOrDefaultAsync(o => o.Id == ocId && o.TenantId == t);
+            if (orden is null) return BadRequest("La orden de compra no existe.");
+            if (orden.Estado != EstadoOrden.Aprobada && orden.Estado != EstadoOrden.Parcial)
+                return BadRequest("Solo se puede recibir contra una orden aprobada o parcial.");
+
+            foreach (var l in dto.Lineas)
+            {
+                if (l.OrdenCompraLineaId is not int lineaId)
+                    return BadRequest("Cada línea debe referenciar una línea de la orden.");
+                var ol = orden.Lineas.FirstOrDefault(x => x.Id == lineaId);
+                if (ol is null) return BadRequest("Una línea no pertenece a la orden indicada.");
+                var pendiente = ol.Cantidad - ol.CantidadRecibida;
+                if (l.Cantidad > pendiente)
+                    return BadRequest($"No puedes recibir más de lo pendiente ({pendiente}) de \"{ol.Producto?.Nombre ?? $"#{ol.ProductoId}"}\".");
+            }
+        }
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         // Se crea como BORRADOR: no se mueve stock hasta confirmar.
@@ -87,6 +111,7 @@ public class RecepcionesController : ControllerBase
             Observaciones = dto.Observaciones,
             Fecha = DateTime.UtcNow,
             Estado = EstadoDocumento.Borrador,
+            OrdenCompraId = orden?.Id,
             TenantId = t,
         };
 
@@ -97,6 +122,7 @@ public class RecepcionesController : ControllerBase
                 ProductoId = l.ProductoId,
                 Cantidad = l.Cantidad,
                 CostoUnitario = l.CostoUnitario,
+                OrdenCompraLineaId = l.OrdenCompraLineaId,
             });
         }
 
@@ -127,6 +153,9 @@ public class RecepcionesController : ControllerBase
             await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
                 l.CostoUnitario, "REC", r.Numero, "Recepción de mercancía");
         }
+
+        // Si viene de una orden de compra, acumular lo recibido y recalcular su estado.
+        await ActualizarOrdenAsync(r, sumar: true);
 
         r.Estado = EstadoDocumento.Confirmado;
         r.FechaConfirmacion = DateTime.UtcNow;
@@ -165,6 +194,9 @@ public class RecepcionesController : ControllerBase
                     return BadRequest($"No se puede anular: el stock de \"{nombre}\" ya fue despachado.");
                 }
             }
+
+            // Revertir lo recibido en la orden de compra, si aplica.
+            await ActualizarOrdenAsync(r, sumar: false);
         }
 
         r.Estado = EstadoDocumento.Anulado;
@@ -173,6 +205,38 @@ public class RecepcionesController : ControllerBase
         await tx.CommitAsync();
 
         return Ok(ToDetalle(r));
+    }
+
+    /// <summary>
+    /// Acumula (o revierte) en la orden de compra la cantidad recibida por esta
+    /// recepción y recalcula su estado (aprobada / parcial / recibida).
+    /// </summary>
+    private async Task ActualizarOrdenAsync(Recepcion r, bool sumar)
+    {
+        if (r.OrdenCompraId is not int ocId) return;
+
+        var orden = await _db.OrdenesCompra
+            .Include(o => o.Lineas)
+            .FirstOrDefaultAsync(o => o.Id == ocId);
+        if (orden is null) return;
+
+        foreach (var l in r.Lineas)
+        {
+            if (l.OrdenCompraLineaId is not int lineaId) continue;
+            var ol = orden.Lineas.FirstOrDefault(x => x.Id == lineaId);
+            if (ol is null) continue;
+            ol.CantidadRecibida += sumar ? l.Cantidad : -l.Cantidad;
+            if (ol.CantidadRecibida < 0) ol.CantidadRecibida = 0;
+        }
+
+        // No tocar órdenes cerradas o anuladas manualmente.
+        if (orden.Estado is EstadoOrden.Cerrada or EstadoOrden.Anulada) return;
+
+        orden.Estado = orden.Lineas.All(x => x.CantidadRecibida >= x.Cantidad)
+            ? EstadoOrden.Recibida
+            : orden.Lineas.Any(x => x.CantidadRecibida > 0)
+                ? EstadoOrden.Parcial
+                : EstadoOrden.Aprobada;
     }
 
     private static RecepcionDetalleDto ToDetalle(Recepcion r) => new(
