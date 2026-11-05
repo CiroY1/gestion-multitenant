@@ -1,0 +1,12 @@
+# dependencias
+/node_modules
+
+# build
+/dist
+
+# logs
+*.log
+
+# entorno (los secretos viven en el .env.local de la raíz del repo)
+.env
+.env.local
