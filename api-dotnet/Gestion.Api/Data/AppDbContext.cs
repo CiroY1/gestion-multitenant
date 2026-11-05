@@ -30,6 +30,8 @@ public class AppDbContext : DbContext
     public DbSet<NotaLinea> NotaLineas => Set<NotaLinea>();
     public DbSet<OrdenCompra> OrdenesCompra => Set<OrdenCompra>();
     public DbSet<OrdenCompraLinea> OrdenCompraLineas => Set<OrdenCompraLinea>();
+    public DbSet<PedidoVenta> PedidosVenta => Set<PedidoVenta>();
+    public DbSet<PedidoVentaLinea> PedidoVentaLineas => Set<PedidoVentaLinea>();
 
     // Terceros
     public DbSet<Proveedor> Proveedores => Set<Proveedor>();
@@ -82,6 +84,17 @@ public class AppDbContext : DbContext
             .HasOne(l => l.OrdenCompraLinea).WithMany()
             .HasForeignKey(l => l.OrdenCompraLineaId).OnDelete(DeleteBehavior.Restrict);
 
+        // Pedidos de venta
+        modelBuilder.Entity<PedidoVenta>().HasIndex(p => p.TenantId);
+        modelBuilder.Entity<PedidoVenta>().HasIndex(p => new { p.TenantId, p.Numero });
+        modelBuilder.Entity<PedidoVentaLinea>().Property(l => l.PrecioUnitario).HasPrecision(12, 2);
+        modelBuilder.Entity<PedidoVenta>()
+            .HasMany(p => p.Lineas).WithOne(l => l.PedidoVenta!)
+            .HasForeignKey(l => l.PedidoVentaId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PedidoVentaLinea>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+
         // Remisiones
         modelBuilder.Entity<Remision>().HasIndex(r => r.TenantId);
         modelBuilder.Entity<Remision>().HasIndex(r => new { r.TenantId, r.Numero });
@@ -90,6 +103,12 @@ public class AppDbContext : DbContext
             .WithOne(l => l.Remision!)
             .HasForeignKey(l => l.RemisionId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Remision>()
+            .HasOne(r => r.PedidoVenta).WithMany()
+            .HasForeignKey(r => r.PedidoVentaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RemisionLinea>()
+            .HasOne(l => l.PedidoVentaLinea).WithMany()
+            .HasForeignKey(l => l.PedidoVentaLineaId).OnDelete(DeleteBehavior.Restrict);
 
         // Recetas
         modelBuilder.Entity<Receta>().HasIndex(r => r.TenantId);

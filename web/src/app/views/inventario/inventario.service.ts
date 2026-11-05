@@ -112,6 +112,47 @@ export interface Remision {
   estado: EstadoDocumento
   unidades: number
   items: number
+  pedidoVenta?: string
+}
+
+export type EstadoPedido =
+  | 'Borrador'
+  | 'Aprobado'
+  | 'Parcial'
+  | 'Despachado'
+  | 'Cerrado'
+  | 'Anulado'
+
+export interface PedidoVenta {
+  id: number
+  numero: string
+  cliente: string
+  observaciones?: string
+  fecha: string
+  estado: EstadoPedido
+  total: number
+  items: number
+  pendiente: number
+}
+
+export interface PedidoLinea {
+  lineaId: number
+  productoId: number
+  producto?: string
+  cantidad: number
+  precioUnitario: number
+  despachada: number
+  pendiente: number
+}
+
+export interface PedidoVentaDetalle {
+  id: number
+  numero: string
+  cliente: string
+  observaciones?: string
+  fecha: string
+  estado: EstadoPedido
+  lineas: PedidoLinea[]
 }
 
 export interface Receta {
@@ -244,9 +285,38 @@ export class InventarioService {
   crearRemision(dto: {
     cliente: string
     observaciones?: string
-    lineas: { productoId: number; cantidad: number }[]
+    pedidoVentaId?: number
+    lineas: { productoId: number; cantidad: number; pedidoVentaLineaId?: number }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/remisiones`, dto)
+  }
+
+  getPedidosVenta(): Observable<PedidoVenta[]> {
+    return this.http.get<PedidoVenta[]>(`${this.base}/pedidosventa`)
+  }
+
+  getPedidoVenta(id: number): Observable<PedidoVentaDetalle> {
+    return this.http.get<PedidoVentaDetalle>(`${this.base}/pedidosventa/${id}`)
+  }
+
+  crearPedidoVenta(dto: {
+    cliente: string
+    observaciones?: string
+    lineas: { productoId: number; cantidad: number; precioUnitario: number }[]
+  }): Observable<unknown> {
+    return this.http.post(`${this.base}/pedidosventa`, dto)
+  }
+
+  aprobarPedidoVenta(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/pedidosventa/${id}/aprobar`, {})
+  }
+
+  cerrarPedidoVenta(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/pedidosventa/${id}/cerrar`, {})
+  }
+
+  anularPedidoVenta(id: number): Observable<unknown> {
+    return this.http.post(`${this.base}/pedidosventa/${id}/anular`, {})
   }
 
   confirmarRemision(id: number): Observable<unknown> {

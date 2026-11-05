@@ -22,6 +22,10 @@ public class Remision
     public DateTime? FechaConfirmacion { get; set; }
     public DateTime? FechaAnulacion { get; set; }
 
+    /// <summary>Pedido de venta origen (si la remisión se hace contra un pedido).</summary>
+    public int? PedidoVentaId { get; set; }
+    public PedidoVenta? PedidoVenta { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<RemisionLinea> Lineas { get; set; } = new List<RemisionLinea>();
@@ -39,4 +43,8 @@ public class RemisionLinea
     public Producto? Producto { get; set; }
 
     public int Cantidad { get; set; }
+
+    /// <summary>Línea del pedido de venta que esta remisión despacha (si aplica).</summary>
+    public int? PedidoVentaLineaId { get; set; }
+    public PedidoVentaLinea? PedidoVentaLinea { get; set; }
 }
