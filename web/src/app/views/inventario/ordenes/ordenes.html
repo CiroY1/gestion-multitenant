@@ -42,7 +42,15 @@
             <div class="row g-2 mb-3">
               <div class="col-md-5">
                 <label class="form-label">Proveedor</label>
-                <input class="form-control" [(ngModel)]="proveedor" placeholder="Nombre del proveedor" />
+                <select class="form-select" [(ngModel)]="proveedor">
+                  <option value="">Selecciona un proveedor…</option>
+                  @for (pr of proveedores(); track pr.id) {
+                    <option [value]="pr.nombre">{{ pr.nombre }}</option>
+                  }
+                </select>
+                @if (proveedores().length === 0) {
+                  <small class="text-muted">No hay proveedores. Créalos en Terceros → Proveedores.</small>
+                }
               </div>
               <div class="col-md-7">
                 <label class="form-label">Observaciones</label>

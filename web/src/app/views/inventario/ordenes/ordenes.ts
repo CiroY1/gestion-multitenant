@@ -7,6 +7,7 @@ import {
   type OrdenCompra,
   type Producto,
 } from '../inventario.service'
+import { TercerosService, type Proveedor } from '../../terceros/terceros.service'
 
 interface LineaForm {
   productoId: number
@@ -30,9 +31,11 @@ interface LineaRecibir {
 })
 export class OrdenesCompra implements OnInit {
   private inv = inject(InventarioService)
+  private terceros = inject(TercerosService)
 
   ordenes = signal<OrdenCompra[]>([])
   productos = signal<Producto[]>([])
+  proveedores = signal<Proveedor[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -62,6 +65,10 @@ export class OrdenesCompra implements OnInit {
     this.cargar()
     this.inv.getProductos().subscribe({
       next: (p) => this.productos.set(p),
+      error: () => {},
+    })
+    this.terceros.getProveedores().subscribe({
+      next: (p) => this.proveedores.set(p),
       error: () => {},
     })
   }
