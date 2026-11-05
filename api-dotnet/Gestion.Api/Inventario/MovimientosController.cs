@@ -14,11 +14,13 @@ public class MovimientosController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
+    private readonly KardexService _kardex;
 
-    public MovimientosController(AppDbContext db, ITenantProvider tenant)
+    public MovimientosController(AppDbContext db, ITenantProvider tenant, KardexService kardex)
     {
         _db = db;
         _tenant = tenant;
+        _kardex = kardex;
     }
 
     [HttpGet]
@@ -48,32 +50,15 @@ public class MovimientosController : ControllerBase
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
-        // Actualización atómica del stock: la BD valida y modifica en una sola
-        // operación, evitando condiciones de carrera (sobreventa / stock negativo).
-        var filas = dto.Tipo == TipoMovimiento.Salida
-            ? await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {dto.Cantidad}
-                   WHERE ""Id"" = {producto.Id} AND ""TenantId"" = {t} AND ""Stock"" >= {dto.Cantidad}")
-            : await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {dto.Cantidad}
-                   WHERE ""Id"" = {producto.Id} AND ""TenantId"" = {t}");
-
-        if (filas == 0)
+        // Movimiento manual al costo promedio vigente (entrada o salida), centralizado.
+        var res = await _kardex.MoverAsync(producto.Id, t, dto.Tipo, dto.Cantidad,
+            null, "MAN", null, "Movimiento manual");
+        if (!res.Ok)
             return BadRequest($"Stock insuficiente. Disponible: {producto.Stock}.");
 
-        var movimiento = new MovimientoStock
-        {
-            ProductoId = producto.Id,
-            Tipo = dto.Tipo,
-            Cantidad = dto.Cantidad,
-            Fecha = DateTime.UtcNow,
-            TenantId = t,
-        };
-        _db.MovimientosStock.Add(movimiento);
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
 
-        return Ok(new MovimientoDto(movimiento.Id, movimiento.ProductoId,
-            movimiento.Tipo.ToString(), movimiento.Cantidad, movimiento.Fecha));
+        return Ok(new MovimientoDto(0, producto.Id, dto.Tipo.ToString(), dto.Cantidad, DateTime.UtcNow));
     }
 }

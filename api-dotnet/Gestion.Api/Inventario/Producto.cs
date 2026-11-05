@@ -9,6 +9,9 @@ public class Producto
     public decimal Precio { get; set; }
     public int Stock { get; set; }
 
+    /// <summary>Costo promedio ponderado actual (se recalcula en cada entrada con costo).</summary>
+    public decimal CostoPromedio { get; set; }
+
     public int CategoriaId { get; set; }
     public Categoria? Categoria { get; set; }
 

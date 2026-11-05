@@ -41,9 +41,13 @@ public class AppDbContext : DbContext
     {
         // Inventario
         modelBuilder.Entity<Producto>().Property(p => p.Precio).HasPrecision(12, 2);
+        modelBuilder.Entity<Producto>().Property(p => p.CostoPromedio).HasPrecision(12, 2);
         modelBuilder.Entity<Categoria>().HasIndex(c => c.TenantId);
         modelBuilder.Entity<Producto>().HasIndex(p => p.TenantId);
         modelBuilder.Entity<MovimientoStock>().HasIndex(m => m.TenantId);
+        modelBuilder.Entity<MovimientoStock>().HasIndex(m => new { m.TenantId, m.ProductoId });
+        modelBuilder.Entity<MovimientoStock>().Property(m => m.CostoUnitario).HasPrecision(12, 2);
+        modelBuilder.Entity<MovimientoStock>().Property(m => m.CostoPromedio).HasPrecision(12, 2);
 
         // Consecutivos: una secuencia por (empresa, tipo de documento).
         modelBuilder.Entity<Consecutivo>()

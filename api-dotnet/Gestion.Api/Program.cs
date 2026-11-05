@@ -41,6 +41,7 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddScoped<ITenantProvider, JwtTenantProvider>();
 builder.Services.AddScoped<Gestion.Api.Inventario.ConsecutivoService>();
+builder.Services.AddScoped<Gestion.Api.Inventario.KardexService>();
 
 // Validación de JWT (HS256 con el secreto compartido).
 builder.Services

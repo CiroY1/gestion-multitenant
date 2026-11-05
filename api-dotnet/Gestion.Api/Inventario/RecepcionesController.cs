@@ -17,12 +17,14 @@ public class RecepcionesController : ControllerBase
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
     private readonly ConsecutivoService _consecutivos;
+    private readonly KardexService _kardex;
 
-    public RecepcionesController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos)
+    public RecepcionesController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos, KardexService kardex)
     {
         _db = db;
         _tenant = tenant;
         _consecutivos = consecutivos;
+        _kardex = kardex;
     }
 
     [HttpGet]
@@ -121,18 +123,9 @@ public class RecepcionesController : ControllerBase
 
         foreach (var l in r.Lineas)
         {
-            await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {l.Cantidad}
-                   WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t}");
-
-            _db.MovimientosStock.Add(new MovimientoStock
-            {
-                ProductoId = l.ProductoId,
-                Tipo = TipoMovimiento.Entrada,
-                Cantidad = l.Cantidad,
-                Fecha = DateTime.UtcNow,
-                TenantId = t,
-            });
+            // Entrada con costo de compra: actualiza el costo promedio del producto.
+            await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                l.CostoUnitario, "REC", r.Numero, "Recepción de mercancía");
         }
 
         r.Estado = EstadoDocumento.Confirmado;
@@ -162,25 +155,15 @@ public class RecepcionesController : ControllerBase
         {
             foreach (var l in r.Lineas)
             {
-                // Guardia: no permitir anular si el stock ya se consumió (quedaría negativo).
-                var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {l.Cantidad}
-                       WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t} AND ""Stock"" >= {l.Cantidad}");
-                if (filas == 0)
+                // Revertir la entrada: salida al costo promedio, con guardia de stock.
+                var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                    null, "REC", r.Numero, "Anulación de recepción");
+                if (!res.Ok)
                 {
                     await tx.RollbackAsync();
                     var nombre = l.Producto?.Nombre ?? $"#{l.ProductoId}";
                     return BadRequest($"No se puede anular: el stock de \"{nombre}\" ya fue despachado.");
                 }
-
-                _db.MovimientosStock.Add(new MovimientoStock
-                {
-                    ProductoId = l.ProductoId,
-                    Tipo = TipoMovimiento.Salida,
-                    Cantidad = l.Cantidad,
-                    Fecha = DateTime.UtcNow,
-                    TenantId = t,
-                });
             }
         }
 

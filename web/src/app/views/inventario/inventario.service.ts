@@ -14,8 +14,31 @@ export interface Producto {
   descripcion?: string
   precio: number
   stock: number
+  costoPromedio: number
   categoriaId: number
   categoria?: string
+}
+
+export interface KardexLinea {
+  fecha: string
+  documentoTipo?: string
+  documentoNumero?: string
+  concepto?: string
+  entrada: number
+  salida: number
+  costoUnitario: number
+  saldoCantidad: number
+  costoPromedio: number
+  saldoValor: number
+}
+
+export interface Kardex {
+  productoId: number
+  producto: string
+  stock: number
+  costoPromedio: number
+  valor: number
+  movimientos: KardexLinea[]
 }
 
 export interface Movimiento {
@@ -165,6 +188,10 @@ export class InventarioService {
 
   getRemision(id: number): Observable<DocumentoDetalle> {
     return this.http.get<DocumentoDetalle>(`${this.base}/remisiones/${id}`)
+  }
+
+  getKardex(productoId: number): Observable<Kardex> {
+    return this.http.get<Kardex>(`${this.base}/kardex/${productoId}`)
   }
 
   getNotas(): Observable<Nota[]> {

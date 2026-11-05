@@ -1,0 +1,130 @@
+<app-page-title [title]="'Inventario'" [subtitle]="'Kardex'" />
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-20">
+                <i class="bx bx-history"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Kardex por producto</h5>
+              <small class="text-muted">Movimientos con saldo y costo promedio corridos</small>
+            </div>
+          </div>
+          <div style="min-width: 260px">
+            <select class="form-select" [(ngModel)]="productoId" (ngModelChange)="cargar()">
+              <option [ngValue]="null">Selecciona un producto…</option>
+              @for (p of productos(); track p.id) {
+                <option [ngValue]="p.id">{{ p.nombre }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="p-3"><div class="alert alert-danger mb-0">{{ error() }}</div></div>
+      }
+
+      @if (kardex(); as k) {
+        <!-- Resumen -->
+        <div class="row g-0 text-center border-bottom">
+          <div class="col-4 p-3 border-end">
+            <p class="text-muted mb-1">Stock actual</p>
+            <h4 class="mb-0">{{ k.stock }}</h4>
+          </div>
+          <div class="col-4 p-3 border-end">
+            <p class="text-muted mb-1">Costo promedio</p>
+            <h4 class="mb-0">$ {{ k.costoPromedio | number: '1.0-2' }}</h4>
+          </div>
+          <div class="col-4 p-3">
+            <p class="text-muted mb-1">Valorización</p>
+            <h4 class="mb-0 text-primary">$ {{ k.valor | number: '1.0-0' }}</h4>
+          </div>
+        </div>
+
+        <div class="table-responsive table-centered">
+          <table class="table text-nowrap mb-0">
+            <thead class="bg-light bg-opacity-50">
+              <tr>
+                <th>Fecha</th>
+                <th>Documento</th>
+                <th>Concepto</th>
+                <th class="text-center">Entrada</th>
+                <th class="text-center">Salida</th>
+                <th class="text-end">Costo unit.</th>
+                <th class="text-center">Saldo</th>
+                <th class="text-end">Costo prom.</th>
+                <th class="text-end">Saldo valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (cargando()) {
+                <tr><td colspan="9" class="text-center text-muted py-5">
+                  <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+                </td></tr>
+              } @else if (k.movimientos.length === 0) {
+                <tr><td colspan="9" class="py-5">
+                  <div class="text-center">
+                    <div class="avatar-lg mx-auto mb-3">
+                      <span class="avatar-title bg-light text-muted rounded-circle fs-24">
+                        <i class="bx bx-history"></i>
+                      </span>
+                    </div>
+                    <h5 class="mb-1">Sin movimientos</h5>
+                    <p class="text-muted mb-0">Este producto aún no tiene movimientos registrados.</p>
+                  </div>
+                </td></tr>
+              } @else {
+                @for (m of k.movimientos; track $index) {
+                  <tr>
+                    <td>{{ m.fecha | date: 'short' }}</td>
+                    <td>
+                      @if (m.documentoNumero) {
+                        <span class="fw-medium">{{ m.documentoNumero }}</span>
+                      } @else if (m.documentoTipo) {
+                        <span class="badge bg-light text-dark">{{ m.documentoTipo }}</span>
+                      }
+                    </td>
+                    <td class="text-muted">{{ m.concepto }}</td>
+                    <td class="text-center">
+                      @if (m.entrada) { <span class="text-success">+{{ m.entrada }}</span> }
+                    </td>
+                    <td class="text-center">
+                      @if (m.salida) { <span class="text-danger">-{{ m.salida }}</span> }
+                    </td>
+                    <td class="text-end text-muted">$ {{ m.costoUnitario | number: '1.0-2' }}</td>
+                    <td class="text-center fw-semibold">{{ m.saldoCantidad }}</td>
+                    <td class="text-end text-muted">$ {{ m.costoPromedio | number: '1.0-2' }}</td>
+                    <td class="text-end fw-semibold">$ {{ m.saldoValor | number: '1.0-0' }}</td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (!cargando() && k.movimientos.length) {
+          <div class="p-3 border-top text-muted">
+            <span class="fw-semibold">{{ k.movimientos.length }}</span> movimientos
+          </div>
+        }
+      } @else if (!error()) {
+        <div class="p-5 text-center text-muted">
+          <div class="avatar-lg mx-auto mb-3">
+            <span class="avatar-title bg-light text-muted rounded-circle fs-24">
+              <i class="bx bx-search"></i>
+            </span>
+          </div>
+          <h5 class="mb-1">Elige un producto</h5>
+          <p class="mb-0">Selecciona un producto arriba para ver su kardex.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

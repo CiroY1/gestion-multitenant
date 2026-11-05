@@ -14,11 +14,13 @@ public class RecetasController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
+    private readonly KardexService _kardex;
 
-    public RecetasController(AppDbContext db, ITenantProvider tenant)
+    public RecetasController(AppDbContext db, ITenantProvider tenant, KardexService kardex)
     {
         _db = db;
         _tenant = tenant;
+        _kardex = kardex;
     }
 
     [HttpGet]
@@ -110,42 +112,26 @@ public class RecetasController : ControllerBase
 
         await using var tx = await _db.Database.BeginTransactionAsync();
 
+        decimal costoTotal = 0m;
         foreach (var ing in receta.Ingredientes)
         {
             var requerido = ing.Cantidad * dto.Cantidad;
 
-            // Resta atómica del insumo con guardia de stock.
-            var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {requerido}
-                   WHERE ""Id"" = {ing.ProductoId} AND ""TenantId"" = {t} AND ""Stock"" >= {requerido}");
-            if (filas == 0)
+            // Consumo del insumo: salida al costo promedio, con guardia de stock.
+            var res = await _kardex.MoverAsync(ing.ProductoId, t, TipoMovimiento.Salida, requerido,
+                null, "PROD", null, $"Consumo producción: {receta.Nombre}");
+            if (!res.Ok)
             {
                 var nombre = nombres.TryGetValue(ing.ProductoId, out var n) ? n : ing.ProductoId.ToString();
                 return BadRequest($"Insumo insuficiente: \"{nombre}\" (se requieren {requerido}).");
             }
-
-            _db.MovimientosStock.Add(new MovimientoStock
-            {
-                ProductoId = ing.ProductoId,
-                Tipo = TipoMovimiento.Salida,
-                Cantidad = requerido,
-                Fecha = DateTime.UtcNow,
-                TenantId = t,
-            });
+            costoTotal += res.CostoMovimiento * requerido;
         }
 
-        // Suma el producto terminado.
-        await _db.Database.ExecuteSqlInterpolatedAsync(
-            $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {dto.Cantidad}
-               WHERE ""Id"" = {receta.ProductoFinalId} AND ""TenantId"" = {t}");
-        _db.MovimientosStock.Add(new MovimientoStock
-        {
-            ProductoId = receta.ProductoFinalId,
-            Tipo = TipoMovimiento.Entrada,
-            Cantidad = dto.Cantidad,
-            Fecha = DateTime.UtcNow,
-            TenantId = t,
-        });
+        // Producto terminado: entra con el costo de los insumos consumidos.
+        var costoUnitario = dto.Cantidad > 0 ? costoTotal / dto.Cantidad : 0m;
+        await _kardex.MoverAsync(receta.ProductoFinalId, t, TipoMovimiento.Entrada, dto.Cantidad,
+            costoUnitario, "PROD", null, $"Producción: {receta.Nombre}");
 
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
