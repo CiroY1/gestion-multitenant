@@ -140,10 +140,30 @@ namespace Gestion.Api.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Concepto")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("CostoPromedio")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("DocumentoNumero")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DocumentoTipo")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SaldoCantidad")
                         .HasColumnType("integer");
 
                     b.Property<string>("TenantId")
@@ -158,6 +178,8 @@ namespace Gestion.Api.Migrations
                     b.HasIndex("ProductoId");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProductoId");
 
                     b.ToTable("MovimientosStock");
                 });
@@ -255,6 +277,10 @@ namespace Gestion.Api.Migrations
 
                     b.Property<int>("CategoriaId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("CostoPromedio")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<string>("Descripcion")
                         .HasColumnType("text");

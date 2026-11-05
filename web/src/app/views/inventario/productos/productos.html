@@ -153,19 +153,21 @@
               <th>Producto</th>
               <th>Categoría</th>
               <th class="text-end">Precio</th>
+              <th class="text-end">Costo prom.</th>
+              <th class="text-end">Valor</th>
               <th class="text-center">Stock</th>
               <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="6" class="text-center text-muted py-5">
+              <tr><td colspan="8" class="text-center text-muted py-5">
                 <span class="spinner-border spinner-border-sm me-2"></span>Cargando productos…
               </td></tr>
             } @else if (error()) {
-              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+              <tr><td colspan="8" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (filtrados().length === 0) {
-              <tr><td colspan="6" class="py-5">
+              <tr><td colspan="8" class="py-5">
                 <div class="text-center">
                   <div class="avatar-lg mx-auto mb-3">
                     <span class="avatar-title bg-light text-muted rounded-circle fs-24">
@@ -188,6 +190,8 @@
                   </td>
                   <td><span class="badge bg-light text-dark">{{ p.categoria }}</span></td>
                   <td class="text-end">$ {{ p.precio | number: '1.0-0' }}</td>
+                  <td class="text-end text-muted">$ {{ p.costoPromedio | number: '1.0-0' }}</td>
+                  <td class="text-end fw-semibold">$ {{ p.costoPromedio * p.stock | number: '1.0-0' }}</td>
                   <td class="text-center">
                     @if (p.stock === 0) {
                       <span class="badge bg-danger-subtle text-danger">Sin stock</span>
@@ -197,7 +201,10 @@
                       <span class="badge bg-success-subtle text-success">{{ p.stock }}</span>
                     }
                   </td>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap">
+                    <a class="btn btn-sm btn-soft-secondary me-1" [routerLink]="['/inventario/kardex']" [queryParams]="{ producto: p.id }" title="Ver kardex">
+                      <i class="bx bx-history fs-16"></i>
+                    </a>
                     <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
                       <i class="bx bx-trash fs-16"></i>
                     </button>
@@ -210,9 +217,15 @@
       </div>
 
       @if (!cargando() && !error()) {
-        <div class="p-3 border-top text-muted">
-          Mostrando <span class="fw-semibold">{{ filtrados().length }}</span> de
-          <span class="fw-semibold">{{ total() }}</span> productos
+        <div class="p-3 border-top text-muted d-flex justify-content-between flex-wrap gap-2">
+          <span>
+            Mostrando <span class="fw-semibold">{{ filtrados().length }}</span> de
+            <span class="fw-semibold">{{ total() }}</span> productos
+          </span>
+          <span>
+            Valorización (al costo):
+            <span class="fw-semibold text-body">$ {{ valorizacion() | number: '1.0-0' }}</span>
+          </span>
         </div>
       }
     </div>

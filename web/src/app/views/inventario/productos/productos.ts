@@ -2,6 +2,7 @@ import { PageTitle } from '@/app/components/page-title'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { RouterModule } from '@angular/router'
 import {
   InventarioService,
   type Categoria,
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-inventario-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitle],
+  imports: [CommonModule, FormsModule, RouterModule, PageTitle],
   templateUrl: './productos.html',
 })
 export class Productos implements OnInit {
@@ -37,6 +38,10 @@ export class Productos implements OnInit {
   sinStock = computed(() => this.productos().filter((p) => p.stock === 0).length)
   numCategorias = computed(
     () => new Set(this.productos().map((p) => p.categoria)).size
+  )
+  // Valorización al costo (promedio ponderado), no al precio de venta.
+  valorizacion = computed(() =>
+    this.productos().reduce((s, p) => s + p.costoPromedio * p.stock, 0)
   )
 
   filtrados = computed(() => {

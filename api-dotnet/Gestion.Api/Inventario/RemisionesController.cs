@@ -17,12 +17,14 @@ public class RemisionesController : ControllerBase
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
     private readonly ConsecutivoService _consecutivos;
+    private readonly KardexService _kardex;
 
-    public RemisionesController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos)
+    public RemisionesController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos, KardexService kardex)
     {
         _db = db;
         _tenant = tenant;
         _consecutivos = consecutivos;
+        _kardex = kardex;
     }
 
     [HttpGet]
@@ -118,25 +120,15 @@ public class RemisionesController : ControllerBase
 
         foreach (var l in r.Lineas)
         {
-            // Resta de stock atómica con guardia: si no hay suficiente, afecta 0 filas.
-            var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {l.Cantidad}
-                   WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t} AND ""Stock"" >= {l.Cantidad}");
-            if (filas == 0)
+            // Salida al costo promedio, con guardia de stock suficiente.
+            var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                null, "REM", r.Numero, "Remisión de salida");
+            if (!res.Ok)
             {
                 await tx.RollbackAsync();
                 var nombre = l.Producto?.Nombre ?? $"#{l.ProductoId}";
                 return BadRequest($"Stock insuficiente de \"{nombre}\".");
             }
-
-            _db.MovimientosStock.Add(new MovimientoStock
-            {
-                ProductoId = l.ProductoId,
-                Tipo = TipoMovimiento.Salida,
-                Cantidad = l.Cantidad,
-                Fecha = DateTime.UtcNow,
-                TenantId = t,
-            });
         }
 
         r.Estado = EstadoDocumento.Confirmado;
@@ -166,18 +158,9 @@ public class RemisionesController : ControllerBase
         {
             foreach (var l in r.Lineas)
             {
-                await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {l.Cantidad}
-                       WHERE ""Id"" = {l.ProductoId} AND ""TenantId"" = {t}");
-
-                _db.MovimientosStock.Add(new MovimientoStock
-                {
-                    ProductoId = l.ProductoId,
-                    Tipo = TipoMovimiento.Entrada,
-                    Cantidad = l.Cantidad,
-                    Fecha = DateTime.UtcNow,
-                    TenantId = t,
-                });
+                // Revertir la salida: entrada al costo promedio (devuelve el stock).
+                await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                    null, "REM", r.Numero, "Anulación de remisión");
             }
         }
 

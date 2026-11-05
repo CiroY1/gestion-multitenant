@@ -4,6 +4,7 @@ import { Recepciones } from './recepciones/recepciones'
 import { Remisiones } from './remisiones/remisiones'
 import { Recetas } from './recetas/recetas'
 import { Notas } from './notas/notas'
+import { KardexView } from './kardex/kardex'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -30,5 +31,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'notas',
     component: Notas,
     data: { title: 'Notas crédito/débito' },
+  },
+  {
+    path: 'kardex',
+    component: KardexView,
+    data: { title: 'Kardex' },
   },
 ]

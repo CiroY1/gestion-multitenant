@@ -29,7 +29,7 @@ public class ProductosController : ControllerBase
             .Where(p => p.TenantId == t)
             .OrderBy(p => p.Nombre)
             .Select(p => new ProductoDto(
-                p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
+                p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock, p.CostoPromedio,
                 p.CategoriaId, p.Categoria!.Nombre))
             .ToListAsync();
         return Ok(items);
@@ -44,7 +44,7 @@ public class ProductosController : ControllerBase
         return p is null
             ? NotFound()
             : Ok(new ProductoDto(p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
-                p.CategoriaId, p.Categoria?.Nombre));
+                p.CostoPromedio, p.CategoriaId, p.Categoria?.Nombre));
     }
 
     [HttpPost]
@@ -75,7 +75,7 @@ public class ProductosController : ControllerBase
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(Obtener), new { id = producto.Id },
             new ProductoDto(producto.Id, producto.Nombre, producto.Descripcion,
-                producto.Precio, producto.Stock, producto.CategoriaId, null));
+                producto.Precio, producto.Stock, producto.CostoPromedio, producto.CategoriaId, null));
     }
 
     [HttpPut("{id:int}")]

@@ -7,7 +7,7 @@ public record GuardarCategoriaDto(string Nombre);
 // --- Productos ---
 public record ProductoDto(
     int Id, string Nombre, string? Descripcion, decimal Precio, int Stock,
-    int CategoriaId, string? Categoria);
+    decimal CostoPromedio, int CategoriaId, string? Categoria);
 
 public record CrearProductoDto(
     string Nombre, string? Descripcion, decimal Precio, int StockInicial, int CategoriaId);
@@ -18,3 +18,13 @@ public record ActualizarProductoDto(
 // --- Movimientos de stock ---
 public record MovimientoDto(int Id, int ProductoId, string Tipo, int Cantidad, DateTime Fecha);
 public record CrearMovimientoDto(int ProductoId, TipoMovimiento Tipo, int Cantidad);
+
+// --- Kardex ---
+public record KardexLineaDto(
+    DateTime Fecha, string? DocumentoTipo, string? DocumentoNumero, string? Concepto,
+    int Entrada, int Salida, decimal CostoUnitario, int SaldoCantidad,
+    decimal CostoPromedio, decimal SaldoValor);
+
+public record KardexDto(
+    int ProductoId, string Producto, int Stock, decimal CostoPromedio, decimal Valor,
+    List<KardexLineaDto> Movimientos);

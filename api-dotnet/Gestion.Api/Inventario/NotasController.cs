@@ -15,12 +15,14 @@ public class NotasController : ControllerBase
     private readonly AppDbContext _db;
     private readonly ITenantProvider _tenant;
     private readonly ConsecutivoService _consecutivos;
+    private readonly KardexService _kardex;
 
-    public NotasController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos)
+    public NotasController(AppDbContext db, ITenantProvider tenant, ConsecutivoService consecutivos, KardexService kardex)
     {
         _db = db;
         _tenant = tenant;
         _consecutivos = consecutivos;
+        _kardex = kardex;
     }
 
     [HttpGet]
@@ -147,19 +149,20 @@ public class NotasController : ControllerBase
         {
             if (n.Tipo == TipoNota.Credito)
             {
-                // Devolución de cliente: la mercancía regresa (suma stock).
-                await AjustarStockAsync(l.ProductoId, t, +l.Cantidad);
-                RegistrarMovimiento(l.ProductoId, TipoMovimiento.Entrada, l.Cantidad, t);
+                // Devolución de cliente: la mercancía regresa (entra al costo promedio).
+                await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                    null, "NC", n.Numero, "Devolución de cliente");
             }
             else
             {
-                // Devolución a proveedor: la mercancía sale (resta stock, con guardia).
-                if (!await AjustarStockAsync(l.ProductoId, t, -l.Cantidad))
+                // Devolución a proveedor: la mercancía sale (al costo promedio, con guardia).
+                var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                    null, "ND", n.Numero, "Devolución a proveedor");
+                if (!res.Ok)
                 {
                     await tx.RollbackAsync();
                     return BadRequest($"Stock insuficiente de \"{l.Producto?.Nombre ?? $"#{l.ProductoId}"}\".");
                 }
-                RegistrarMovimiento(l.ProductoId, TipoMovimiento.Salida, l.Cantidad, t);
             }
         }
 
@@ -189,19 +192,20 @@ public class NotasController : ControllerBase
             {
                 if (n.Tipo == TipoNota.Credito)
                 {
-                    // Revertir la entrada: vuelve a salir (con guardia).
-                    if (!await AjustarStockAsync(l.ProductoId, t, -l.Cantidad))
+                    // Revertir la entrada: vuelve a salir (al costo promedio, con guardia).
+                    var res = await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Salida, l.Cantidad,
+                        null, "NC", n.Numero, "Anulación de nota crédito");
+                    if (!res.Ok)
                     {
                         await tx.RollbackAsync();
                         return BadRequest($"No se puede anular: el stock de \"{l.Producto?.Nombre ?? $"#{l.ProductoId}"}\" ya fue despachado.");
                     }
-                    RegistrarMovimiento(l.ProductoId, TipoMovimiento.Salida, l.Cantidad, t);
                 }
                 else
                 {
-                    // Revertir la salida: vuelve a entrar.
-                    await AjustarStockAsync(l.ProductoId, t, +l.Cantidad);
-                    RegistrarMovimiento(l.ProductoId, TipoMovimiento.Entrada, l.Cantidad, t);
+                    // Revertir la salida: vuelve a entrar (al costo promedio).
+                    await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
+                        null, "ND", n.Numero, "Anulación de nota débito");
                 }
             }
         }
@@ -221,37 +225,6 @@ public class NotasController : ControllerBase
         .Include(n => n.Recepcion)
         .Include(n => n.Lineas).ThenInclude(l => l.Producto)
         .FirstOrDefaultAsync(n => n.Id == id && n.TenantId == t);
-
-    /// <summary>
-    /// Ajuste atómico de stock. Con delta negativo aplica la guardia de stock
-    /// suficiente y devuelve false si no alcanza (0 filas afectadas).
-    /// </summary>
-    private async Task<bool> AjustarStockAsync(int productoId, string t, int delta)
-    {
-        if (delta >= 0)
-        {
-            await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + {delta}
-                   WHERE ""Id"" = {productoId} AND ""TenantId"" = {t}");
-            return true;
-        }
-
-        var faltante = -delta;
-        var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
-            $@"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - {faltante}
-               WHERE ""Id"" = {productoId} AND ""TenantId"" = {t} AND ""Stock"" >= {faltante}");
-        return filas > 0;
-    }
-
-    private void RegistrarMovimiento(int productoId, TipoMovimiento tipo, int cantidad, string t) =>
-        _db.MovimientosStock.Add(new MovimientoStock
-        {
-            ProductoId = productoId,
-            Tipo = tipo,
-            Cantidad = cantidad,
-            Fecha = DateTime.UtcNow,
-            TenantId = t,
-        });
 
     private static NotaDetalleDto Map(Nota n) => new(
         n.Id, n.Numero, n.Tipo,
