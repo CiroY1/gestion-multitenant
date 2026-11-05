@@ -29,6 +29,9 @@ export interface Cita {
   servicioNombre: string
   clienteId: number | null
   clienteNombre: string
+  trabajadorId: number | null
+  trabajadorNombre: string
+  duracionMin: number
   bebeNombre: string
   fechaHora: string
   estado: EstadoCita
@@ -39,6 +42,7 @@ export interface NuevaCita {
   servicioId: number
   clienteId?: number | null
   clienteNombre?: string
+  trabajadorId?: number | null
   bebeNombre?: string
   fechaHora: string
   notas?: string

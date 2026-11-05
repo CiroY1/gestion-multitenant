@@ -1,0 +1,67 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Agenda'" />
+
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>
+          <small class="text-muted">Programada</small>
+        </span>
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+          <small class="text-muted">Atendida</small>
+        </span>
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>
+          <small class="text-muted">Cancelada</small>
+        </span>
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>
+          <small class="text-muted">Tarea</small>
+        </span>
+      </div>
+      <button class="btn btn-sm btn-soft-secondary" (click)="cargar()">
+        <i class="bx bx-refresh me-1"></i>Actualizar
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <div class="text-center text-muted py-5">
+        <span class="spinner-border spinner-border-sm me-2"></span>Cargando agenda…
+      </div>
+    } @else {
+      <full-calendar [options]="calendarOptions"></full-calendar>
+    }
+  </div>
+</div>
+
+<!-- Detalle del evento -->
+@if (detalle(); as d) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="detalle.set(null)">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ d.tipo }}</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="detalle.set(null)"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="mb-1">{{ d.titulo }}</h6>
+          <p class="text-muted mb-2">{{ d.cuando }}</p>
+          <p class="mb-1"><span class="fw-semibold">Estado:</span> {{ d.estado }}</p>
+          @if (d.extra) {
+            <p class="mb-0 text-muted">{{ d.extra }}</p>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="detalle.set(null)">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

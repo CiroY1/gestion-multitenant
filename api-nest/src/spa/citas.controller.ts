@@ -20,6 +20,7 @@ interface CitaDto {
   servicioId?: number
   clienteId?: number
   clienteNombre?: string
+  trabajadorId?: number
   bebeNombre?: string
   fechaHora?: string
   notas?: string
@@ -46,6 +47,9 @@ export class CitasController {
               "ServicioNombre" AS "servicioNombre",
               "ClienteId" AS "clienteId",
               "ClienteNombre" AS "clienteNombre",
+              "TrabajadorId" AS "trabajadorId",
+              "TrabajadorNombre" AS "trabajadorNombre",
+              "DuracionMin" AS "duracionMin",
               "BebeNombre" AS "bebeNombre",
               "FechaHora" AS "fechaHora",
               "Estado" AS estado,
@@ -65,12 +69,27 @@ export class CitasController {
     if (!Number.isInteger(servicioId)) {
       throw new BadRequestException('Selecciona un servicio.')
     }
-    const serv = await this.pool.query<{ Nombre: string }>(
-      'SELECT "Nombre" FROM "SpaServicios" WHERE "Id" = $1 AND "TenantId" = $2',
+    const serv = await this.pool.query<{ Nombre: string; DuracionMin: number }>(
+      'SELECT "Nombre", "DuracionMin" FROM "SpaServicios" WHERE "Id" = $1 AND "TenantId" = $2',
       [servicioId, u.tenantId],
     )
     if (!serv.rowCount) {
       throw new BadRequestException('El servicio no existe.')
+    }
+
+    // Terapeuta (opcional): si viene, debe existir; guardamos su nombre como snapshot.
+    let trabajadorId: number | null = null
+    let trabajadorNombre = ''
+    if (dto.trabajadorId != null && `${dto.trabajadorId}` !== '') {
+      const tid = Number(dto.trabajadorId)
+      if (!Number.isInteger(tid)) throw new BadRequestException('Terapeuta inválido.')
+      const trab = await this.pool.query<{ Nombre: string }>(
+        'SELECT "Nombre" FROM "SpaTrabajadores" WHERE "Id" = $1 AND "TenantId" = $2',
+        [tid, u.tenantId],
+      )
+      if (!trab.rowCount) throw new BadRequestException('El terapeuta no existe.')
+      trabajadorId = tid
+      trabajadorNombre = trab.rows[0].Nombre
     }
 
     // Cliente: si viene un id, lo validamos contra el maestro compartido
@@ -101,8 +120,9 @@ export class CitasController {
     const { rows } = await this.pool.query<{ id: number }>(
       `INSERT INTO "SpaCitas"
          ("TenantId","ServicioId","ServicioNombre","ClienteId","ClienteNombre",
+          "TrabajadorId","TrabajadorNombre","DuracionMin",
           "BebeNombre","FechaHora","Estado","Notas")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'Programada',$8)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Programada',$11)
        RETURNING "Id" AS id`,
       [
         u.tenantId,
@@ -110,6 +130,9 @@ export class CitasController {
         serv.rows[0].Nombre,
         clienteId,
         clienteNombre,
+        trabajadorId,
+        trabajadorNombre,
+        serv.rows[0].DuracionMin ?? 30,
         (dto.bebeNombre ?? '').trim(),
         fecha,
         (dto.notas ?? '').trim(),

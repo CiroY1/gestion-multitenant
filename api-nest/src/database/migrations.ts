@@ -93,4 +93,13 @@ export const MIGRACIONES: Migracion[] = [
         ADD COLUMN IF NOT EXISTS "Email" text NOT NULL DEFAULT '';
     `,
   },
+  {
+    id: '006_spa_cita_terapeuta',
+    sql: `
+      ALTER TABLE "SpaCitas"
+        ADD COLUMN IF NOT EXISTS "TrabajadorId" integer NULL,
+        ADD COLUMN IF NOT EXISTS "TrabajadorNombre" text NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS "DuracionMin" integer NOT NULL DEFAULT 30;
+    `,
+  },
 ]

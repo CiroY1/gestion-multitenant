@@ -168,6 +168,13 @@ export const MENU: MenuItem[] = [
     isTitle: true,
   },
   {
+    key: 'spa-calendario',
+    icon: 'iconamoon:calendar-2-duotone',
+    label: 'Agenda',
+    link: '/spa/calendario',
+    parentKey: 'spa',
+  },
+  {
     key: 'spa-servicios',
     icon: 'iconamoon:heart-duotone',
     label: 'Servicios',
