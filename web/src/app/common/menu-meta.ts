@@ -182,6 +182,20 @@ export const MENU: MenuItem[] = [
     parentKey: 'spa',
   },
   {
+    key: 'spa-trabajadores',
+    icon: 'iconamoon:profile-circle-duotone',
+    label: 'Trabajadores',
+    link: '/spa/trabajadores',
+    parentKey: 'spa',
+  },
+  {
+    key: 'spa-tareas',
+    icon: 'iconamoon:check-circle-1-duotone',
+    label: 'Tareas',
+    link: '/spa/tareas',
+    parentKey: 'spa',
+  },
+  {
     key: 'sistema',
     label: 'SISTEMA',
     isTitle: true,

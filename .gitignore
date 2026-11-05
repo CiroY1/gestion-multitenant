@@ -35,3 +35,6 @@ Reback-Angular_v1.0/
 
 # Artefacto de planeación
 plan.html
+
+# Salida temporal del plugin de Playwright (MCP)
+.playwright-mcp/

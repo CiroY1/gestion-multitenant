@@ -51,4 +51,39 @@ export const MIGRACIONES: Migracion[] = [
         ON "SpaCitas" ("TenantId", "FechaHora");
     `,
   },
+  {
+    id: '003_spa_trabajadores',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "SpaTrabajadores" (
+        "Id"       serial PRIMARY KEY,
+        "TenantId" text NOT NULL,
+        "Nombre"   text NOT NULL,
+        "Rol"      text NOT NULL DEFAULT '',
+        "Activo"   boolean NOT NULL DEFAULT true,
+        "CreadoEn" timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaTrabajadores_TenantId"
+        ON "SpaTrabajadores" ("TenantId");
+    `,
+  },
+  {
+    id: '004_spa_tareas',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "SpaTareas" (
+        "Id"               serial PRIMARY KEY,
+        "TenantId"         text NOT NULL,
+        "Titulo"           text NOT NULL,
+        "TrabajadorId"     integer NOT NULL,
+        "TrabajadorNombre" text NOT NULL,
+        "FechaHora"        timestamptz NOT NULL,
+        "Estado"           text NOT NULL DEFAULT 'Pendiente',
+        "Notas"            text NOT NULL DEFAULT '',
+        "CreadoEn"         timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaTareas_Agenda"
+        ON "SpaTareas" ("TenantId", "FechaHora");
+      CREATE INDEX IF NOT EXISTS "IX_SpaTareas_Trabajador"
+        ON "SpaTareas" ("TenantId", "TrabajadorId");
+    `,
+  },
 ]

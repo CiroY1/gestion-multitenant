@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http'
+import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core'
 import type { Observable } from 'rxjs'
 import { environment } from '@/environments/environment'
@@ -44,6 +44,38 @@ export interface NuevaCita {
   notas?: string
 }
 
+export interface Trabajador {
+  id: number
+  nombre: string
+  rol: string
+  activo: boolean
+}
+
+export interface NuevoTrabajador {
+  nombre: string
+  rol?: string
+  activo?: boolean
+}
+
+export type EstadoTarea = 'Pendiente' | 'EnProgreso' | 'Hecha'
+
+export interface Tarea {
+  id: number
+  titulo: string
+  trabajadorId: number
+  trabajadorNombre: string
+  fechaHora: string
+  estado: EstadoTarea
+  notas: string
+}
+
+export interface NuevaTarea {
+  titulo: string
+  trabajadorId: number
+  fechaHora: string
+  notas?: string
+}
+
 /**
  * Módulo spa-bebés: vive en el SEGUNDO backend (NestJS, puerto 5046).
  * El token lo adjunta el interceptor (mismo JWT para ambos backends).
@@ -59,6 +91,10 @@ export class SpaService {
 
   crearServicio(dto: NuevoServicio): Observable<{ id: number; ok: boolean }> {
     return this.http.post<{ id: number; ok: boolean }>(`${this.base}/servicios`, dto)
+  }
+
+  actualizarServicio(id: number, dto: NuevoServicio): Observable<{ ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(`${this.base}/servicios/${id}`, dto)
   }
 
   eliminarServicio(id: number): Observable<{ ok: boolean }> {
@@ -81,5 +117,43 @@ export class SpaService {
 
   cancelarCita(id: number): Observable<{ ok: boolean }> {
     return this.http.post<{ ok: boolean }>(`${this.base}/citas/${id}/cancelar`, {})
+  }
+
+  // --- Trabajadores ---
+
+  getTrabajadores(): Observable<Trabajador[]> {
+    return this.http.get<Trabajador[]>(`${this.base}/trabajadores`)
+  }
+
+  crearTrabajador(dto: NuevoTrabajador): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/trabajadores`, dto)
+  }
+
+  actualizarTrabajador(id: number, dto: NuevoTrabajador): Observable<{ ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(`${this.base}/trabajadores/${id}`, dto)
+  }
+
+  eliminarTrabajador(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/trabajadores/${id}`)
+  }
+
+  // --- Tareas (agenda de trabajo) ---
+
+  getTareas(trabajadorId?: number): Observable<Tarea[]> {
+    let params = new HttpParams()
+    if (trabajadorId) params = params.set('trabajadorId', trabajadorId)
+    return this.http.get<Tarea[]>(`${this.base}/tareas`, { params })
+  }
+
+  crearTarea(dto: NuevaTarea): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/tareas`, dto)
+  }
+
+  iniciarTarea(id: number): Observable<{ ok: boolean }> {
+    return this.http.post<{ ok: boolean }>(`${this.base}/tareas/${id}/iniciar`, {})
+  }
+
+  completarTarea(id: number): Observable<{ ok: boolean }> {
+    return this.http.post<{ ok: boolean }>(`${this.base}/tareas/${id}/completar`, {})
   }
 }
