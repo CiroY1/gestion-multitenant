@@ -175,6 +175,10 @@ export class Notas implements OnInit {
       })
   }
 
+  pdf(n: Nota): void {
+    this.inv.abrirPdf('notas', n.id, n.numero)
+  }
+
   confirmar(n: Nota): void {
     this.aviso.set(null)
     this.procesando.set(n.id)

@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
+// Licencia Community de QuestPDF (gratuita para uso permitido).
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Cargar variables del .env.local en la raíz del monorepo (solo desarrollo).
@@ -42,6 +45,7 @@ builder.Services.AddSingleton<EncryptionService>();
 builder.Services.AddScoped<ITenantProvider, JwtTenantProvider>();
 builder.Services.AddScoped<Gestion.Api.Inventario.ConsecutivoService>();
 builder.Services.AddScoped<Gestion.Api.Inventario.KardexService>();
+builder.Services.AddScoped<Gestion.Api.Documentos.PdfService>();
 
 // Validación de JWT (HS256 con el secreto compartido).
 builder.Services
