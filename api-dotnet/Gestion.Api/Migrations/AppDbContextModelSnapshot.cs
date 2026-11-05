@@ -149,6 +149,35 @@ namespace Gestion.Api.Migrations
                     b.ToTable("AjusteLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Bodega", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Bodegas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -197,6 +226,39 @@ namespace Gestion.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Consecutivos");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.ExistenciaBodega", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BodegaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BodegaId");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("TenantId", "ProductoId", "BodegaId")
+                        .IsUnique();
+
+                    b.ToTable("ExistenciaBodegas");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
@@ -835,6 +897,25 @@ namespace Gestion.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Ajuste");
+
+                    b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.ExistenciaBodega", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Bodega");
 
                     b.Navigation("Producto");
                 });
