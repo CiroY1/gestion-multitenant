@@ -34,56 +34,6 @@
             </button>
           </div>
         </div>
-
-        @if (mostrarForm()) {
-          <div class="mt-3 p-3 rounded bg-light-subtle border">
-            <div class="row g-2">
-              <div class="col-md-4">
-                <label class="form-label">Servicio</label>
-                <select class="form-select" [(ngModel)]="form.servicioId">
-                  @for (s of servicios(); track s.id) {
-                    <option [ngValue]="s.id">{{ s.nombre }}</option>
-                  }
-                </select>
-                @if (servicios().length === 0) {
-                  <small class="text-muted">No hay servicios. Créalos en Servicios.</small>
-                }
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Cliente</label>
-                <select class="form-select" [(ngModel)]="form.clienteId">
-                  @for (c of clientes(); track c.id) {
-                    <option [ngValue]="c.id">{{ c.nombre }}</option>
-                  }
-                </select>
-                @if (clientes().length === 0) {
-                  <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
-                }
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Bebé (opcional)</label>
-                <input class="form-control" [(ngModel)]="form.bebeNombre" placeholder="Nombre del bebé" />
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Fecha y hora</label>
-                <input type="datetime-local" class="form-control" [(ngModel)]="form.fechaHora" />
-              </div>
-              <div class="col-md-8">
-                <label class="form-label">Notas (opcional)</label>
-                <input class="form-control" [(ngModel)]="form.notas" placeholder="Observaciones" />
-              </div>
-            </div>
-            <div class="mt-3 d-flex gap-2 justify-content-end">
-              <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
-              <button class="btn btn-success" (click)="crear()" [disabled]="guardando()">
-                @if (guardando()) {
-                  <span class="spinner-border spinner-border-sm me-1"></span>
-                }
-                Agendar cita
-              </button>
-            </div>
-          </div>
-        }
       </div>
 
       <div class="table-responsive table-centered">
@@ -157,3 +107,65 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Nueva cita -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva cita</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Servicio</label>
+              <select class="form-select" [(ngModel)]="form.servicioId">
+                @for (s of servicios(); track s.id) {
+                  <option [ngValue]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+              @if (servicios().length === 0) {
+                <small class="text-muted">No hay servicios. Créalos en Servicios.</small>
+              }
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cliente</label>
+              <select class="form-select" [(ngModel)]="form.clienteId">
+                @for (c of clientes(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+              @if (clientes().length === 0) {
+                <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
+              }
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bebé (opcional)</label>
+              <input class="form-control" [(ngModel)]="form.bebeNombre" placeholder="Nombre del bebé" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha y hora</label>
+              <input type="datetime-local" class="form-control" [(ngModel)]="form.fechaHora" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Notas (opcional)</label>
+              <input class="form-control" [(ngModel)]="form.notas" placeholder="Observaciones" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="crear()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Agendar cita
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
