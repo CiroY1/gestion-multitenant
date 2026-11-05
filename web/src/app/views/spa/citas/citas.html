@@ -44,19 +44,20 @@
               <th>Cliente</th>
               <th>Bebé</th>
               <th>Servicio</th>
+              <th>Terapeuta</th>
               <th class="text-center">Estado</th>
               <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             @if (cargando()) {
-              <tr><td colspan="6" class="text-center text-muted py-5">
+              <tr><td colspan="7" class="text-center text-muted py-5">
                 <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
               </td></tr>
             } @else if (error()) {
-              <tr><td colspan="6" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+              <tr><td colspan="7" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
             } @else if (citas().length === 0) {
-              <tr><td colspan="6" class="py-5">
+              <tr><td colspan="7" class="py-5">
                 <div class="text-center">
                   <div class="avatar-lg mx-auto mb-3">
                     <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-24">
@@ -74,6 +75,7 @@
                   <td>{{ c.clienteNombre }}</td>
                   <td class="text-muted">{{ c.bebeNombre || '—' }}</td>
                   <td>{{ c.servicioNombre }}</td>
+                  <td class="text-muted">{{ c.trabajadorNombre || '—' }}</td>
                   <td class="text-center">
                     <span class="badge {{ badge(c.estado) }}">{{ c.estado }}</span>
                   </td>
@@ -140,6 +142,15 @@
               @if (clientes().length === 0) {
                 <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
               }
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Terapeuta (opcional)</label>
+              <select class="form-select" [(ngModel)]="form.trabajadorId">
+                <option [ngValue]="0">Sin asignar</option>
+                @for (t of trabajadores(); track t.id) {
+                  <option [ngValue]="t.id">{{ t.nombre }}</option>
+                }
+              </select>
             </div>
             <div class="col-md-6">
               <label class="form-label">Bebé (opcional)</label>

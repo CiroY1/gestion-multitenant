@@ -2,7 +2,12 @@ import { PageTitle } from '@/app/components/page-title'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import { SpaService, type Cita, type ServicioSpa } from '../spa.service'
+import {
+  SpaService,
+  type Cita,
+  type ServicioSpa,
+  type Trabajador,
+} from '../spa.service'
 import { TercerosService, type Cliente } from '../../terceros/terceros.service'
 
 @Component({
@@ -18,6 +23,7 @@ export class Citas implements OnInit {
   citas = signal<Cita[]>([])
   servicios = signal<ServicioSpa[]>([])
   clientes = signal<Cliente[]>([])
+  trabajadores = signal<Trabajador[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -26,7 +32,14 @@ export class Citas implements OnInit {
   guardando = signal(false)
   procesando = signal<number | null>(null)
 
-  form = { servicioId: 0, clienteId: 0, bebeNombre: '', fechaHora: '', notas: '' }
+  form = {
+    servicioId: 0,
+    clienteId: 0,
+    trabajadorId: 0,
+    bebeNombre: '',
+    fechaHora: '',
+    notas: '',
+  }
 
   programadas = computed(
     () => this.citas().filter((c) => c.estado === 'Programada').length
@@ -40,6 +53,10 @@ export class Citas implements OnInit {
     })
     this.terceros.getClientes().subscribe({
       next: (c) => this.clientes.set(c),
+      error: () => {},
+    })
+    this.spa.getTrabajadores().subscribe({
+      next: (t) => this.trabajadores.set(t.filter((x) => x.activo)),
       error: () => {},
     })
   }
@@ -67,6 +84,7 @@ export class Citas implements OnInit {
     this.form = {
       servicioId: this.servicios()[0]?.id ?? 0,
       clienteId: this.clientes()[0]?.id ?? 0,
+      trabajadorId: 0,
       bebeNombre: '',
       fechaHora: '',
       notas: '',
@@ -85,6 +103,7 @@ export class Citas implements OnInit {
       .crearCita({
         servicioId: this.form.servicioId,
         clienteId: this.form.clienteId,
+        trabajadorId: this.form.trabajadorId || undefined,
         bebeNombre: this.form.bebeNombre,
         fechaHora: this.form.fechaHora,
         notas: this.form.notas,
