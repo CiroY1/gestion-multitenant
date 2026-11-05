@@ -39,6 +39,10 @@ public class Nota
     public DateTime? FechaConfirmacion { get; set; }
     public DateTime? FechaAnulacion { get; set; }
 
+    /// <summary>Bodega afectada (crédito entra a ella; débito sale de ella).</summary>
+    public int? BodegaId { get; set; }
+    public Bodega? Bodega { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<NotaLinea> Lineas { get; set; } = new List<NotaLinea>();

@@ -2,7 +2,7 @@ namespace Gestion.Api.Inventario.Dtos;
 
 // Entrada
 public record CrearAjusteLineaDto(int ProductoId, TipoMovimiento Tipo, int Cantidad);
-public record CrearAjusteDto(string Motivo, List<CrearAjusteLineaDto> Lineas);
+public record CrearAjusteDto(string Motivo, List<CrearAjusteLineaDto> Lineas, int? BodegaId = null);
 
 // Salida
 public record AjusteLineaDto(int ProductoId, string? Producto, string Tipo, int Cantidad);

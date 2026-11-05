@@ -137,6 +137,23 @@ public class AppDbContext : DbContext
             .HasOne(e => e.Bodega).WithMany()
             .HasForeignKey(e => e.BodegaId).OnDelete(DeleteBehavior.Restrict);
 
+        // Bodega en los movimientos y documentos (opcional, sin borrado en cascada).
+        modelBuilder.Entity<MovimientoStock>()
+            .HasOne(m => m.Bodega).WithMany()
+            .HasForeignKey(m => m.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Recepcion>()
+            .HasOne(r => r.Bodega).WithMany()
+            .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Remision>()
+            .HasOne(r => r.Bodega).WithMany()
+            .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Ajuste>()
+            .HasOne(a => a.Bodega).WithMany()
+            .HasForeignKey(a => a.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Nota>()
+            .HasOne(n => n.Bodega).WithMany()
+            .HasForeignKey(n => n.BodegaId).OnDelete(DeleteBehavior.Restrict);
+
         // Ajustes de inventario
         modelBuilder.Entity<Ajuste>().HasIndex(a => a.TenantId);
         modelBuilder.Entity<Ajuste>().HasIndex(a => new { a.TenantId, a.Numero });

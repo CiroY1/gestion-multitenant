@@ -67,6 +67,9 @@ public class AjustesController : ControllerBase
         if (ids.Any(id => !productos.Contains(id)))
             return BadRequest("Uno o más productos no existen.");
 
+        var bodega = await _kardex.ResolverBodegaAsync(t, dto.BodegaId);
+        if (bodega is null) return BadRequest("Bodega inválida o no hay bodegas registradas.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         var ajuste = new Ajuste
@@ -75,6 +78,7 @@ public class AjustesController : ControllerBase
             Motivo = dto.Motivo.Trim(),
             Fecha = DateTime.UtcNow,
             Estado = EstadoDocumento.Borrador,
+            BodegaId = bodega,
             TenantId = t,
         };
         foreach (var l in dto.Lineas)
@@ -105,11 +109,14 @@ public class AjustesController : ControllerBase
         if (a.Estado != EstadoDocumento.Borrador)
             return BadRequest("Solo se puede confirmar un ajuste en borrador.");
 
+        var bod = a.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null);
+        if (bod is null) return BadRequest("No hay bodega para el ajuste.");
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         foreach (var l in a.Lineas)
         {
-            var res = await _kardex.MoverAsync(l.ProductoId, t, l.Tipo, l.Cantidad,
+            var res = await _kardex.MoverAsync(l.ProductoId, t, bod.Value, l.Tipo, l.Cantidad,
                 null, TipoDoc, a.Numero, $"Ajuste: {a.Motivo}");
             if (!res.Ok)
             {
@@ -140,13 +147,14 @@ public class AjustesController : ControllerBase
 
         if (a.Estado == EstadoDocumento.Confirmado)
         {
+            var bod = a.BodegaId ?? await _kardex.ResolverBodegaAsync(t, null) ?? 0;
             foreach (var l in a.Lineas)
             {
                 // Revertir: una entrada se devuelve como salida y viceversa.
                 var inverso = l.Tipo == TipoMovimiento.Entrada
                     ? TipoMovimiento.Salida
                     : TipoMovimiento.Entrada;
-                var res = await _kardex.MoverAsync(l.ProductoId, t, inverso, l.Cantidad,
+                var res = await _kardex.MoverAsync(l.ProductoId, t, bod, inverso, l.Cantidad,
                     null, TipoDoc, a.Numero, $"Anulación de ajuste: {a.Motivo}");
                 if (!res.Ok)
                 {

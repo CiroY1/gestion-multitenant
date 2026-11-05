@@ -2,7 +2,7 @@ namespace Gestion.Api.Inventario.Dtos;
 
 // Entrada
 public record CrearRecepcionLineaDto(int ProductoId, int Cantidad, decimal CostoUnitario, int? OrdenCompraLineaId = null);
-public record CrearRecepcionDto(string Proveedor, string? Observaciones, List<CrearRecepcionLineaDto> Lineas, int? OrdenCompraId = null);
+public record CrearRecepcionDto(string Proveedor, string? Observaciones, List<CrearRecepcionLineaDto> Lineas, int? OrdenCompraId = null, int? BodegaId = null);
 
 // Salida
 public record RecepcionDto(

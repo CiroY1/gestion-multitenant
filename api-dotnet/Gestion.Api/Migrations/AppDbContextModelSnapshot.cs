@@ -87,6 +87,9 @@ namespace Gestion.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BodegaId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Estado")
                         .HasColumnType("integer");
 
@@ -112,6 +115,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BodegaId");
 
                     b.HasIndex("TenantId");
 
@@ -269,6 +274,9 @@ namespace Gestion.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BodegaId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Cantidad")
                         .HasColumnType("integer");
 
@@ -307,6 +315,8 @@ namespace Gestion.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BodegaId");
+
                     b.HasIndex("ProductoId");
 
                     b.HasIndex("TenantId");
@@ -323,6 +333,9 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BodegaId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Estado")
                         .HasColumnType("integer");
@@ -357,6 +370,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BodegaId");
 
                     b.HasIndex("RecepcionId");
 
@@ -597,6 +612,9 @@ namespace Gestion.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BodegaId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Estado")
                         .HasColumnType("integer");
 
@@ -628,6 +646,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BodegaId");
 
                     b.HasIndex("OrdenCompraId");
 
@@ -735,6 +755,9 @@ namespace Gestion.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BodegaId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Cliente")
                         .IsRequired()
                         .HasColumnType("text");
@@ -766,6 +789,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BodegaId");
 
                     b.HasIndex("PedidoVentaId");
 
@@ -882,6 +907,16 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Empresa");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Ajuste", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Bodega");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.AjusteLinea", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Ajuste", "Ajuste")
@@ -922,17 +957,29 @@ namespace Gestion.Api.Migrations
 
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany("Movimientos")
                         .HasForeignKey("ProductoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Bodega");
+
                     b.Navigation("Producto");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Nota", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.Recepcion", "Recepcion")
                         .WithMany()
                         .HasForeignKey("RecepcionId")
@@ -942,6 +989,8 @@ namespace Gestion.Api.Migrations
                         .WithMany()
                         .HasForeignKey("RemisionId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Bodega");
 
                     b.Navigation("Recepcion");
 
@@ -1018,10 +1067,17 @@ namespace Gestion.Api.Migrations
 
             modelBuilder.Entity("Gestion.Api.Inventario.Recepcion", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.OrdenCompra", "OrdenCompra")
                         .WithMany()
                         .HasForeignKey("OrdenCompraId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Bodega");
 
                     b.Navigation("OrdenCompra");
                 });
@@ -1084,10 +1140,17 @@ namespace Gestion.Api.Migrations
 
             modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
+                        .WithMany()
+                        .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.PedidoVenta", "PedidoVenta")
                         .WithMany()
                         .HasForeignKey("PedidoVentaId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Bodega");
 
                     b.Navigation("PedidoVenta");
                 });

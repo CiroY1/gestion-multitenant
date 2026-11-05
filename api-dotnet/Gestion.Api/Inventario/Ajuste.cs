@@ -21,6 +21,10 @@ public class Ajuste
     public DateTime? FechaConfirmacion { get; set; }
     public DateTime? FechaAnulacion { get; set; }
 
+    /// <summary>Bodega sobre la que se ajusta el stock.</summary>
+    public int? BodegaId { get; set; }
+    public Bodega? Bodega { get; set; }
+
     public string TenantId { get; set; } = string.Empty;
 
     public ICollection<AjusteLinea> Lineas { get; set; } = new List<AjusteLinea>();
