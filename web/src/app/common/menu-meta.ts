@@ -175,6 +175,13 @@ export const MENU: MenuItem[] = [
     parentKey: 'spa',
   },
   {
+    key: 'spa-citas',
+    icon: 'iconamoon:calendar-1-duotone',
+    label: 'Citas',
+    link: '/spa/citas',
+    parentKey: 'spa',
+  },
+  {
     key: 'sistema',
     label: 'SISTEMA',
     isTitle: true,
