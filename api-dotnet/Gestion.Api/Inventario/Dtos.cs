@@ -22,7 +22,7 @@ public record CrearMovimientoDto(int ProductoId, TipoMovimiento Tipo, int Cantid
 // --- Kardex ---
 public record KardexLineaDto(
     DateTime Fecha, string? DocumentoTipo, string? DocumentoNumero, string? Concepto,
-    int Entrada, int Salida, decimal CostoUnitario, int SaldoCantidad,
+    string? Bodega, int Entrada, int Salida, decimal CostoUnitario, int SaldoCantidad,
     decimal CostoPromedio, decimal SaldoValor);
 
 public record KardexDto(

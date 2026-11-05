@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import {
   InventarioService,
+  type Bodega,
   type Producto,
   type Receta,
 } from '../inventario.service'
@@ -24,6 +25,7 @@ export class Recetas implements OnInit {
 
   recetas = signal<Receta[]>([])
   productos = signal<Producto[]>([])
+  bodegas = signal<Bodega[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
   aviso = signal<string | null>(null)
@@ -31,6 +33,12 @@ export class Recetas implements OnInit {
 
   mostrarForm = signal(false)
   guardando = signal(false)
+
+  // Producción
+  produciendo = signal<Receta | null>(null)
+  producirCantidad = 1
+  producirBodegaId: number | null = null
+  procesandoProd = signal(false)
 
   nombre = ''
   productoFinalId = 0
@@ -40,6 +48,10 @@ export class Recetas implements OnInit {
     this.cargar()
     this.inv.getProductos().subscribe({
       next: (p) => this.productos.set(p),
+      error: () => {},
+    })
+    this.inv.getBodegas().subscribe({
+      next: (b) => this.bodegas.set(b.filter((x) => x.activa)),
       error: () => {},
     })
   }
@@ -99,23 +111,32 @@ export class Recetas implements OnInit {
       })
   }
 
-  producir(r: Receta): void {
-    const txt = prompt(`¿Cuántas unidades de "${r.productoFinal}" quieres producir?`, '1')
-    if (!txt) return
-    const cantidad = parseInt(txt, 10)
-    if (!cantidad || cantidad <= 0) return
-
+  abrirProducir(r: Receta): void {
+    this.produciendo.set(r)
+    this.producirCantidad = 1
+    this.producirBodegaId = this.bodegas()[0]?.id ?? null
     this.aviso.set(null)
     this.exito.set(null)
-    this.inv.producir(r.id, cantidad).subscribe({
-      next: () =>
+  }
+
+  confirmarProducir(): void {
+    const r = this.produciendo()
+    if (!r || this.producirCantidad <= 0) return
+    this.procesandoProd.set(true)
+    this.aviso.set(null)
+    this.exito.set(null)
+    this.inv.producir(r.id, this.producirCantidad, this.producirBodegaId ?? undefined).subscribe({
+      next: () => {
+        this.procesandoProd.set(false)
         this.exito.set(
-          `Se produjeron ${cantidad} unidad(es) de "${r.productoFinal}". Revisa el stock en Productos.`
-        ),
-      error: (e) =>
-        this.aviso.set(
-          typeof e?.error === 'string' ? e.error : 'No se pudo producir.'
-        ),
+          `Se produjeron ${this.producirCantidad} unidad(es) de "${r.productoFinal}". Revisa el stock en Productos.`
+        )
+        this.produciendo.set(null)
+      },
+      error: (e) => {
+        this.procesandoProd.set(false)
+        this.aviso.set(typeof e?.error === 'string' ? e.error : 'No se pudo producir.')
+      },
     })
   }
 }

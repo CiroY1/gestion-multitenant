@@ -24,6 +24,7 @@ export interface KardexLinea {
   documentoTipo?: string
   documentoNumero?: string
   concepto?: string
+  bodega?: string
   entrada: number
   salida: number
   costoUnitario: number

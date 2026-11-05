@@ -35,6 +35,7 @@ public class KardexController : ControllerBase
             .OrderBy(m => m.Fecha).ThenBy(m => m.Id)
             .Select(m => new KardexLineaDto(
                 m.Fecha, m.DocumentoTipo, m.DocumentoNumero, m.Concepto,
+                m.Bodega != null ? m.Bodega.Nombre : null,
                 m.Tipo == TipoMovimiento.Entrada ? m.Cantidad : 0,
                 m.Tipo == TipoMovimiento.Salida ? m.Cantidad : 0,
                 m.CostoUnitario, m.SaldoCantidad, m.CostoPromedio,
