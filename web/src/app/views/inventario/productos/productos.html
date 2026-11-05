@@ -224,9 +224,11 @@
                     <a class="btn btn-sm btn-soft-secondary me-1" [routerLink]="['/inventario/kardex']" [queryParams]="{ producto: p.id }" title="Ver kardex">
                       <i class="bx bx-history fs-16"></i>
                     </a>
-                    <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
-                      <i class="bx bx-trash fs-16"></i>
-                    </button>
+                    @if (esAdmin) {
+                      <button class="btn btn-sm btn-soft-danger" (click)="eliminar(p)" title="Eliminar">
+                        <i class="bx bx-trash fs-16"></i>
+                      </button>
+                    }
                   </td>
                 </tr>
               }

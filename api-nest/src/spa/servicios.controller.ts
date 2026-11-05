@@ -16,6 +16,8 @@ import { PG_POOL } from '../database/database.module'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import type { UsuarioJwt } from '../auth/jwt.strategy'
+import { Roles } from '../auth/roles.decorator'
+import { RolesGuard } from '../auth/roles.guard'
 import { ModSpaGuard } from './mod-spa.guard'
 
 interface ServicioDto {
@@ -33,7 +35,7 @@ interface ServicioDto {
  * Doble guard: JWT válido (JwtAuthGuard) + empresa con módulo spa (ModSpaGuard).
  * Todas las consultas filtran por TenantId: aislamiento multi-tenant.
  */
-@UseGuards(JwtAuthGuard, ModSpaGuard)
+@UseGuards(JwtAuthGuard, ModSpaGuard, RolesGuard)
 @Controller('spa/servicios')
 export class ServiciosController {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
@@ -109,6 +111,7 @@ export class ServiciosController {
     return { ok: true }
   }
 
+  @Roles('admin')
   @Delete(':id')
   async eliminar(
     @CurrentUser() u: UsuarioJwt,

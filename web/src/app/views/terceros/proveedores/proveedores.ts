@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { Observable } from 'rxjs'
 import { TercerosService, type Proveedor } from '../terceros.service'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-proveedores',
@@ -13,6 +14,11 @@ import { TercerosService, type Proveedor } from '../terceros.service'
 })
 export class Proveedores implements OnInit {
   private svc = inject(TercerosService)
+  private auth = inject(AuthenticationService)
+
+  get esAdmin(): boolean {
+    return this.auth.esAdmin
+  }
 
   items = signal<Proveedor[]>([])
   cargando = signal(true)

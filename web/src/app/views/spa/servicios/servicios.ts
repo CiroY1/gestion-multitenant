@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SpaService, type ServicioSpa } from '../spa.service'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-spa-servicios',
@@ -12,6 +13,11 @@ import { SpaService, type ServicioSpa } from '../spa.service'
 })
 export class Servicios implements OnInit {
   private spa = inject(SpaService)
+  private auth = inject(AuthenticationService)
+
+  get esAdmin(): boolean {
+    return this.auth.esAdmin
+  }
 
   servicios = signal<ServicioSpa[]>([])
   cargando = signal(true)

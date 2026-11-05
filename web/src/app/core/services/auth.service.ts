@@ -16,6 +16,11 @@ export class AuthenticationService {
   usuario: LoginResponse['usuario'] | null = null
   modulos: LoginResponse['modulos'] | null = null
 
+  /** ¿El usuario de la sesión es administrador? */
+  get esAdmin(): boolean {
+    return this.usuario?.rol === 'admin'
+  }
+
   public readonly authSessionKey = '_REBACK_AUTH_SESSION_KEY_'
   private readonly userKey = '_REBACK_USER_'
   private cookieService = inject(CookieService)

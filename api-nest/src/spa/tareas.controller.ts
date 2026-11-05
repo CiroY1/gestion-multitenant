@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -110,15 +111,39 @@ export class TareasController {
     estado: 'EnProgreso' | 'Hecha',
     desde: string[],
   ) {
-    const { rowCount } = await this.pool.query(
-      `UPDATE "SpaTareas"
-          SET "Estado" = $1
-        WHERE "Id" = $2 AND "TenantId" = $3 AND "Estado" = ANY($4)`,
-      [estado, id, u.tenantId, desde],
+    // Traemos la tarea y el email del trabajador asignado (vínculo con el login).
+    const { rows } = await this.pool.query<{
+      estado: string
+      trabajadorEmail: string | null
+    }>(
+      `SELECT t."Estado" AS estado, w."Email" AS "trabajadorEmail"
+         FROM "SpaTareas" t
+         LEFT JOIN "SpaTrabajadores" w ON w."Id" = t."TrabajadorId"
+        WHERE t."Id" = $1 AND t."TenantId" = $2`,
+      [id, u.tenantId],
     )
-    if (!rowCount) {
-      throw new BadRequestException('La tarea no existe o no permite ese cambio.')
+    if (!rows.length) throw new BadRequestException('La tarea no existe.')
+    const tarea = rows[0]
+
+    // Solo el admin o el trabajador asignado (vinculado por email) puede cambiarla.
+    const esAdmin = u.rol === 'admin'
+    const email = (u.email ?? '').toLowerCase()
+    const esAsignado =
+      !!tarea.trabajadorEmail && tarea.trabajadorEmail.toLowerCase() === email
+    if (!esAdmin && !esAsignado) {
+      throw new ForbiddenException(
+        'Solo el trabajador asignado o un administrador puede cambiar esta tarea.',
+      )
     }
+
+    if (!desde.includes(tarea.estado)) {
+      throw new BadRequestException('La tarea no permite ese cambio.')
+    }
+
+    await this.pool.query(
+      `UPDATE "SpaTareas" SET "Estado" = $1 WHERE "Id" = $2 AND "TenantId" = $3`,
+      [estado, id, u.tenantId],
+    )
     return { ok: true }
   }
 }

@@ -63,6 +63,7 @@ public class CategoriasController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Eliminar(int id)
     {
         var t = _tenant.GetTenantId();

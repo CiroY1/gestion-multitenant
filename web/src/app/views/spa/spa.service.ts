@@ -48,12 +48,14 @@ export interface Trabajador {
   id: number
   nombre: string
   rol: string
+  email: string
   activo: boolean
 }
 
 export interface NuevoTrabajador {
   nombre: string
   rol?: string
+  email?: string
   activo?: boolean
 }
 

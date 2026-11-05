@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SpaService, type Trabajador } from '../spa.service'
+import { AuthenticationService } from '@/app/core/services/auth.service'
 
 @Component({
   selector: 'app-spa-trabajadores',
@@ -12,6 +13,11 @@ import { SpaService, type Trabajador } from '../spa.service'
 })
 export class Trabajadores implements OnInit {
   private spa = inject(SpaService)
+  private auth = inject(AuthenticationService)
+
+  get esAdmin(): boolean {
+    return this.auth.esAdmin
+  }
 
   trabajadores = signal<Trabajador[]>([])
   cargando = signal(true)
@@ -21,7 +27,7 @@ export class Trabajadores implements OnInit {
   mostrarForm = signal(false)
   guardando = signal(false)
   editId = signal<number | null>(null)
-  form = { nombre: '', rol: '', activo: true }
+  form = { nombre: '', rol: '', email: '', activo: true }
 
   ngOnInit(): void {
     this.cargar()
@@ -48,14 +54,14 @@ export class Trabajadores implements OnInit {
 
   abrirCrear(): void {
     this.editId.set(null)
-    this.form = { nombre: '', rol: '', activo: true }
+    this.form = { nombre: '', rol: '', email: '', activo: true }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
 
   abrirEditar(t: Trabajador): void {
     this.editId.set(t.id)
-    this.form = { nombre: t.nombre, rol: t.rol, activo: t.activo }
+    this.form = { nombre: t.nombre, rol: t.rol, email: t.email, activo: t.activo }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
