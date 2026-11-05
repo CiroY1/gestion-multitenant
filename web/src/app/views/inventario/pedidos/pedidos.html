@@ -42,7 +42,15 @@
             <div class="row g-2 mb-3">
               <div class="col-md-5">
                 <label class="form-label">Cliente</label>
-                <input class="form-control" [(ngModel)]="cliente" placeholder="Nombre del cliente" />
+                <select class="form-select" [(ngModel)]="cliente">
+                  <option value="">Selecciona un cliente…</option>
+                  @for (cl of clientes(); track cl.id) {
+                    <option [value]="cl.nombre">{{ cl.nombre }}</option>
+                  }
+                </select>
+                @if (clientes().length === 0) {
+                  <small class="text-muted">No hay clientes. Créalos en Terceros → Clientes.</small>
+                }
               </div>
               <div class="col-md-7">
                 <label class="form-label">Observaciones</label>
