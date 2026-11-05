@@ -34,6 +34,10 @@ public class AuthController : ControllerBase
         if (usuario is null || !_pwd.Verify(dto.Password, usuario.PasswordHash))
             return Unauthorized(new { mensaje = "Credenciales inválidas." });
 
+        // Un usuario desactivado por el administrador no puede iniciar sesión.
+        if (!usuario.Activo)
+            return Unauthorized(new { mensaje = "Tu usuario está inactivo. Contacta a un administrador." });
+
         var (token, expira) = _jwt.CrearToken(usuario, usuario.Empresa!);
 
         return Ok(new
