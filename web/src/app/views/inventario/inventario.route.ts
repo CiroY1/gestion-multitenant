@@ -12,6 +12,7 @@ import { Bodegas } from './bodegas/bodegas'
 import { Existencias } from './existencias/existencias'
 import { Traslados } from './traslados/traslados'
 import { Unidades } from './unidades/unidades'
+import { Vencimientos } from './vencimientos/vencimientos'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -78,5 +79,10 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'unidades',
     component: Unidades,
     data: { title: 'Unidades de medida' },
+  },
+  {
+    path: 'vencimientos',
+    component: Vencimientos,
+    data: { title: 'Vencimientos' },
   },
 ]

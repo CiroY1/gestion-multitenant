@@ -30,7 +30,7 @@ export class Productos implements OnInit {
   // Formulario de creación.
   mostrarForm = signal(false)
   guardando = signal(false)
-  nuevo = { nombre: '', descripcion: '', precio: 0, stockInicial: 0, categoriaId: 0, unidadMedidaId: 0 }
+  nuevo = { nombre: '', descripcion: '', precio: 0, stockInicial: 0, categoriaId: 0, unidadMedidaId: 0, rastreaLotes: false }
 
   // Métricas.
   total = computed(() => this.productos().length)
@@ -93,6 +93,7 @@ export class Productos implements OnInit {
       stockInicial: 0,
       categoriaId: this.categorias()[0]?.id ?? 0,
       unidadMedidaId: this.unidades()[0]?.id ?? 0,
+      rastreaLotes: false,
     }
     this.mostrarForm.set(true)
   }

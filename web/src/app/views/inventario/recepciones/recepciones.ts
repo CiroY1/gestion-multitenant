@@ -14,6 +14,8 @@ interface LineaForm {
   productoId: number
   cantidad: number
   costoUnitario: number
+  loteCodigo?: string
+  loteVencimiento?: string
 }
 
 @Component({
@@ -83,7 +85,7 @@ export class Recepciones implements OnInit {
     this.observaciones = ''
     this.bodegaId = this.bodegas()[0]?.id ?? null
     this.lineas = [
-      { productoId: this.productos()[0]?.id ?? 0, cantidad: 1, costoUnitario: 0 },
+      { productoId: this.productos()[0]?.id ?? 0, cantidad: 1, costoUnitario: 0, loteCodigo: '', loteVencimiento: '' },
     ]
     this.mostrarForm.set(true)
   }
@@ -93,7 +95,14 @@ export class Recepciones implements OnInit {
       productoId: this.productos()[0]?.id ?? 0,
       cantidad: 1,
       costoUnitario: 0,
+      loteCodigo: '',
+      loteVencimiento: '',
     })
+  }
+
+  /** ¿El producto de esta línea rastrea lotes? (para mostrar los campos de lote). */
+  rastrea(productoId: number): boolean {
+    return this.productos().find((p) => p.id === productoId)?.rastreaLotes ?? false
   }
 
   quitarLinea(i: number): void {
@@ -108,7 +117,13 @@ export class Recepciones implements OnInit {
         proveedor: this.proveedor,
         observaciones: this.observaciones,
         bodegaId: this.bodegaId ?? undefined,
-        lineas: this.lineas,
+        lineas: this.lineas.map((l) => ({
+          productoId: l.productoId,
+          cantidad: l.cantidad,
+          costoUnitario: l.costoUnitario,
+          loteCodigo: l.loteCodigo?.trim() || undefined,
+          loteVencimiento: l.loteVencimiento || undefined,
+        })),
       })
       .subscribe({
         next: () => {

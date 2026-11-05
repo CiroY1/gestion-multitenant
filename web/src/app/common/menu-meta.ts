@@ -132,6 +132,12 @@ export const MENU: MenuItem[] = [
         link: '/inventario/unidades',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-vencimientos',
+        label: 'Vencimientos',
+        link: '/inventario/vencimientos',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

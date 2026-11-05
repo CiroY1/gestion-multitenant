@@ -1,0 +1,86 @@
+<app-page-title [title]="'Inventario'" [subtitle]="'Vencimientos'" />
+
+@if (alertas() > 0) {
+  <div class="alert alert-warning">
+    <i class="bx bx-error me-1"></i>
+    Hay <span class="fw-semibold">{{ alertas() }}</span> lote(s) con stock vencidos o por vencer (≤ 30 días).
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-20">
+                <i class="bx bx-calendar-exclamation"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Vencimientos de lotes</h5>
+              <small class="text-muted">Lotes por producto, ordenados por fecha de vencimiento</small>
+            </div>
+          </div>
+          <button class="btn btn-soft-secondary" (click)="cargar()">
+            <i class="bx bx-refresh me-1"></i>Actualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Producto</th>
+              <th>Lote</th>
+              <th>Vence</th>
+              <th class="text-center">Stock</th>
+              <th class="text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="5" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="5" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (lotes().length === 0) {
+              <tr><td colspan="5" class="py-5">
+                <div class="text-center">
+                  <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-light text-muted rounded-circle fs-24">
+                      <i class="bx bx-calendar-check"></i>
+                    </span>
+                  </div>
+                  <h5 class="mb-1">Sin lotes</h5>
+                  <p class="text-muted mb-0">Los productos que rastrean lotes los registran al recibir mercancía.</p>
+                </div>
+              </td></tr>
+            } @else {
+              @for (l of lotes(); track l.id) {
+                <tr>
+                  <td class="fw-medium">{{ l.producto }}</td>
+                  <td><span class="badge bg-light text-dark">{{ l.codigo }}</span></td>
+                  <td>{{ l.fechaVencimiento ? (l.fechaVencimiento | date: 'yyyy-MM-dd' : 'UTC') : '—' }}</td>
+                  <td class="text-center">{{ l.stock }}</td>
+                  <td class="text-center">
+                    <span class="badge {{ estado(l).cls }}">{{ estado(l).label }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && lotes().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ lotes().length }}</span> lotes
+        </div>
+      }
+    </div>
+  </div>
+</div>
