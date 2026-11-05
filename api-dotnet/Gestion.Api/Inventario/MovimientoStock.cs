@@ -25,6 +25,10 @@ public class MovimientoStock
     public int? BodegaId { get; set; }
     public Bodega? Bodega { get; set; }
 
+    /// <summary>Lote afectado (en productos que rastrean lotes).</summary>
+    public int? LoteId { get; set; }
+    public Lote? Lote { get; set; }
+
     /// <summary>Costo unitario del movimiento (compra en entradas; costo promedio en salidas).</summary>
     public decimal CostoUnitario { get; set; }
 

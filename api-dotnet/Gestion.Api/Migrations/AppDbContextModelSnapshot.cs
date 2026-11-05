@@ -266,6 +266,74 @@ namespace Gestion.Api.Migrations
                     b.ToTable("ExistenciaBodegas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.ExistenciaLote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BodegaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LoteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("TenantId", "ProductoId", "BodegaId", "LoteId")
+                        .IsUnique();
+
+                    b.ToTable("ExistenciaLotes");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Lote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("FechaVencimiento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ProductoId", "Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Lotes");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
                     b.Property<int>("Id")
@@ -300,6 +368,9 @@ namespace Gestion.Api.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("LoteId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductoId")
                         .HasColumnType("integer");
 
@@ -316,6 +387,8 @@ namespace Gestion.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BodegaId");
+
+                    b.HasIndex("LoteId");
 
                     b.HasIndex("ProductoId");
 
@@ -588,6 +661,9 @@ namespace Gestion.Api.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<bool>("RastreaLotes")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Stock")
                         .HasColumnType("integer");
 
@@ -678,6 +754,9 @@ namespace Gestion.Api.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<int?>("LoteId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("OrdenCompraLineaId")
                         .HasColumnType("integer");
 
@@ -688,6 +767,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
 
                     b.HasIndex("OrdenCompraLineaId");
 
@@ -1063,11 +1144,38 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Producto");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.ExistenciaLote", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lote");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Lote", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Bodega", "Bodega")
                         .WithMany()
                         .HasForeignKey("BodegaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Gestion.Api.Inventario.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
@@ -1077,6 +1185,8 @@ namespace Gestion.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Bodega");
+
+                    b.Navigation("Lote");
 
                     b.Navigation("Producto");
                 });
@@ -1199,6 +1309,11 @@ namespace Gestion.Api.Migrations
 
             modelBuilder.Entity("Gestion.Api.Inventario.RecepcionLinea", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.OrdenCompraLinea", "OrdenCompraLinea")
                         .WithMany()
                         .HasForeignKey("OrdenCompraLineaId")
@@ -1215,6 +1330,8 @@ namespace Gestion.Api.Migrations
                         .HasForeignKey("RecepcionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Lote");
 
                     b.Navigation("OrdenCompraLinea");
 

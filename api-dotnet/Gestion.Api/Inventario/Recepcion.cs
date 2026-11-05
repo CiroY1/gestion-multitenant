@@ -52,4 +52,8 @@ public class RecepcionLinea
     /// <summary>Línea de la orden de compra que esta recepción abastece (si aplica).</summary>
     public int? OrdenCompraLineaId { get; set; }
     public OrdenCompraLinea? OrdenCompraLinea { get; set; }
+
+    /// <summary>Lote recibido (en productos que rastrean lotes).</summary>
+    public int? LoteId { get; set; }
+    public Lote? Lote { get; set; }
 }

@@ -19,6 +19,9 @@ public class Producto
     public int? UnidadMedidaId { get; set; }
     public UnidadMedida? UnidadMedida { get; set; }
 
+    /// <summary>Si es true, el producto maneja lotes con vencimiento (consumo FEFO).</summary>
+    public bool RastreaLotes { get; set; }
+
     /// <summary>Empresa (tenant) dueña del registro.</summary>
     public string TenantId { get; set; } = string.Empty;
 

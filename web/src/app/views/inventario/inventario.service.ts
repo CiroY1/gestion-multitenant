@@ -19,6 +19,16 @@ export interface Producto {
   categoria?: string
   unidadMedidaId?: number
   unidad?: string
+  rastreaLotes?: boolean
+}
+
+export interface Lote {
+  id: number
+  productoId: number
+  producto: string
+  codigo: string
+  fechaVencimiento?: string
+  stock: number
 }
 
 export interface UnidadMedida {
@@ -260,8 +270,19 @@ export class InventarioService {
     stockInicial: number
     categoriaId: number
     unidadMedidaId?: number
+    rastreaLotes?: boolean
   }): Observable<Producto> {
     return this.http.post<Producto>(`${this.base}/productos`, dto)
+  }
+
+  getLotes(productoId?: number): Observable<Lote[]> {
+    const url = productoId
+      ? `${this.base}/lotes?productoId=${productoId}`
+      : `${this.base}/lotes`
+    return this.http.get<Lote[]>(url)
+  }
+  crearLote(dto: { productoId: number; codigo: string; fechaVencimiento?: string }): Observable<Lote> {
+    return this.http.post<Lote>(`${this.base}/lotes`, dto)
   }
 
   getUnidades(): Observable<UnidadMedida[]> {
@@ -289,6 +310,8 @@ export class InventarioService {
       cantidad: number
       costoUnitario: number
       ordenCompraLineaId?: number
+      loteCodigo?: string
+      loteVencimiento?: string
     }[]
   }): Observable<unknown> {
     return this.http.post(`${this.base}/recepciones`, dto)

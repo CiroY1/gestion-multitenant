@@ -31,7 +31,8 @@ public class ProductosController : ControllerBase
             .Select(p => new ProductoDto(
                 p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock, p.CostoPromedio,
                 p.CategoriaId, p.Categoria!.Nombre,
-                p.UnidadMedidaId, p.UnidadMedida != null ? p.UnidadMedida.Abreviatura : null))
+                p.UnidadMedidaId, p.UnidadMedida != null ? p.UnidadMedida.Abreviatura : null,
+                p.RastreaLotes))
             .ToListAsync();
         return Ok(items);
     }
@@ -46,7 +47,7 @@ public class ProductosController : ControllerBase
             ? NotFound()
             : Ok(new ProductoDto(p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
                 p.CostoPromedio, p.CategoriaId, p.Categoria?.Nombre,
-                p.UnidadMedidaId, p.UnidadMedida?.Abreviatura));
+                p.UnidadMedidaId, p.UnidadMedida?.Abreviatura, p.RastreaLotes));
     }
 
     [HttpPost]
@@ -72,6 +73,7 @@ public class ProductosController : ControllerBase
             Stock = dto.StockInicial,
             CategoriaId = dto.CategoriaId,
             UnidadMedidaId = dto.UnidadMedidaId,
+            RastreaLotes = dto.RastreaLotes,
             TenantId = t,
         };
         _db.Productos.Add(producto);
@@ -79,7 +81,7 @@ public class ProductosController : ControllerBase
         return CreatedAtAction(nameof(Obtener), new { id = producto.Id },
             new ProductoDto(producto.Id, producto.Nombre, producto.Descripcion,
                 producto.Precio, producto.Stock, producto.CostoPromedio, producto.CategoriaId, null,
-                producto.UnidadMedidaId, null));
+                producto.UnidadMedidaId, null, producto.RastreaLotes));
     }
 
     [HttpPut("{id:int}")]
@@ -103,6 +105,7 @@ public class ProductosController : ControllerBase
         p.Precio = dto.Precio;
         p.CategoriaId = dto.CategoriaId;
         p.UnidadMedidaId = dto.UnidadMedidaId;
+        p.RastreaLotes = dto.RastreaLotes;
         // El stock NO se edita aquí: cambia solo con movimientos.
         await _db.SaveChangesAsync();
         return NoContent();

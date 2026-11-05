@@ -78,6 +78,11 @@ public class RecepcionesController : ControllerBase
         if (ids.Any(id => !productos.Contains(id)))
             return BadRequest("Uno o más productos no existen.");
 
+        // Qué productos de las líneas rastrean lotes (para capturar/crear el lote).
+        var rastreaMap = await _db.Productos
+            .Where(p => ids.Contains(p.Id) && p.TenantId == t)
+            .ToDictionaryAsync(p => p.Id, p => p.RastreaLotes);
+
         // Si la recepción es contra una orden de compra, validar la orden y sus líneas.
         OrdenCompra? orden = null;
         if (dto.OrdenCompraId is int ocId)
@@ -121,12 +126,35 @@ public class RecepcionesController : ControllerBase
 
         foreach (var l in dto.Lineas)
         {
+            // Para productos que rastrean lotes, capturar/crear el lote recibido.
+            Lote? lote = null;
+            if (rastreaMap.GetValueOrDefault(l.ProductoId) && !string.IsNullOrWhiteSpace(l.LoteCodigo))
+            {
+                var codigo = l.LoteCodigo.Trim();
+                lote = await _db.Lotes.FirstOrDefaultAsync(
+                    x => x.TenantId == t && x.ProductoId == l.ProductoId && x.Codigo == codigo);
+                if (lote is null)
+                {
+                    lote = new Lote
+                    {
+                        ProductoId = l.ProductoId,
+                        Codigo = codigo,
+                        FechaVencimiento = l.LoteVencimiento.HasValue
+                            ? DateTime.SpecifyKind(l.LoteVencimiento.Value.Date, DateTimeKind.Utc)
+                            : null,
+                        TenantId = t,
+                    };
+                    _db.Lotes.Add(lote);
+                }
+            }
+
             recepcion.Lineas.Add(new RecepcionLinea
             {
                 ProductoId = l.ProductoId,
                 Cantidad = l.Cantidad,
                 CostoUnitario = l.CostoUnitario,
                 OrdenCompraLineaId = l.OrdenCompraLineaId,
+                Lote = lote,
             });
         }
 
@@ -156,9 +184,9 @@ public class RecepcionesController : ControllerBase
 
         foreach (var l in r.Lineas)
         {
-            // Entrada con costo de compra: actualiza el costo promedio del producto.
+            // Entrada con costo de compra: actualiza el costo promedio y, si aplica, el lote.
             await _kardex.MoverAsync(l.ProductoId, t, bod.Value, TipoMovimiento.Entrada, l.Cantidad,
-                l.CostoUnitario, "REC", r.Numero, "Recepción de mercancía");
+                l.CostoUnitario, "REC", r.Numero, "Recepción de mercancía", l.LoteId);
         }
 
         // Si viene de una orden de compra, acumular lo recibido y recalcular su estado.

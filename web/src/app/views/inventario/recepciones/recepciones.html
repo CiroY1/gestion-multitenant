@@ -68,9 +68,11 @@
                 <thead class="bg-light">
                   <tr>
                     <th>Producto</th>
-                    <th style="width: 120px">Cantidad</th>
-                    <th style="width: 150px">Costo unit.</th>
-                    <th style="width: 140px" class="text-end">Subtotal</th>
+                    <th style="width: 110px">Cantidad</th>
+                    <th style="width: 130px">Costo unit.</th>
+                    <th style="width: 130px">Lote</th>
+                    <th style="width: 150px">Vence</th>
+                    <th style="width: 120px" class="text-end">Subtotal</th>
                     <th style="width: 48px"></th>
                   </tr>
                 </thead>
@@ -86,6 +88,20 @@
                       </td>
                       <td><input type="number" class="form-control" [(ngModel)]="l.cantidad" min="1" /></td>
                       <td><input type="number" class="form-control" [(ngModel)]="l.costoUnitario" min="0" /></td>
+                      <td>
+                        @if (rastrea(l.productoId)) {
+                          <input class="form-control" [(ngModel)]="l.loteCodigo" placeholder="Código" />
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                      </td>
+                      <td>
+                        @if (rastrea(l.productoId)) {
+                          <input type="date" class="form-control" [(ngModel)]="l.loteVencimiento" />
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                      </td>
                       <td class="text-end">$ {{ l.cantidad * l.costoUnitario | number: '1.0-0' }}</td>
                       <td>
                         <button class="btn btn-sm btn-soft-danger" (click)="quitarLinea($index)">

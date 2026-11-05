@@ -35,6 +35,8 @@ public class AppDbContext : DbContext
     public DbSet<Ajuste> Ajustes => Set<Ajuste>();
     public DbSet<AjusteLinea> AjusteLineas => Set<AjusteLinea>();
     public DbSet<UnidadMedida> UnidadesMedida => Set<UnidadMedida>();
+    public DbSet<Lote> Lotes => Set<Lote>();
+    public DbSet<ExistenciaLote> ExistenciaLotes => Set<ExistenciaLote>();
     public DbSet<Bodega> Bodegas => Set<Bodega>();
     public DbSet<ExistenciaBodega> ExistenciaBodegas => Set<ExistenciaBodega>();
     public DbSet<Traslado> Traslados => Set<Traslado>();
@@ -133,6 +135,18 @@ public class AppDbContext : DbContext
             .HasOne(i => i.Producto).WithMany()
             .HasForeignKey(i => i.ProductoId).OnDelete(DeleteBehavior.Restrict);
 
+        // Lotes y existencias por lote
+        modelBuilder.Entity<Lote>().HasIndex(l => l.TenantId);
+        modelBuilder.Entity<Lote>().HasIndex(l => new { l.TenantId, l.ProductoId, l.Codigo }).IsUnique();
+        modelBuilder.Entity<Lote>()
+            .HasOne(l => l.Producto).WithMany()
+            .HasForeignKey(l => l.ProductoId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ExistenciaLote>()
+            .HasIndex(e => new { e.TenantId, e.ProductoId, e.BodegaId, e.LoteId }).IsUnique();
+        modelBuilder.Entity<ExistenciaLote>()
+            .HasOne(e => e.Lote).WithMany()
+            .HasForeignKey(e => e.LoteId).OnDelete(DeleteBehavior.Restrict);
+
         // Bodegas y existencias
         modelBuilder.Entity<Bodega>().HasIndex(b => b.TenantId);
         modelBuilder.Entity<ExistenciaBodega>()
@@ -164,6 +178,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<MovimientoStock>()
             .HasOne(m => m.Bodega).WithMany()
             .HasForeignKey(m => m.BodegaId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<MovimientoStock>()
+            .HasOne(m => m.Lote).WithMany()
+            .HasForeignKey(m => m.LoteId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<RecepcionLinea>()
+            .HasOne(l => l.Lote).WithMany()
+            .HasForeignKey(l => l.LoteId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Recepcion>()
             .HasOne(r => r.Bodega).WithMany()
             .HasForeignKey(r => r.BodegaId).OnDelete(DeleteBehavior.Restrict);

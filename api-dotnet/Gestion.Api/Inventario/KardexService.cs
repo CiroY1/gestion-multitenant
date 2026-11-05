@@ -11,9 +11,10 @@ public record MovimientoResultado(bool Ok, decimal CostoMovimiento, int Saldo, d
 
 /// <summary>
 /// Punto único por el que pasan TODOS los movimientos de stock. Mantiene la
-/// existencia por bodega, el costo promedio ponderado (global) del producto y el
-/// saldo total, y deja la traza (kardex). La actualización es atómica y se
-/// enlista en la transacción activa del DbContext.
+/// existencia por bodega y por lote, el costo promedio ponderado (global) del
+/// producto y el saldo total, y deja la traza (kardex). Las salidas de productos
+/// que rastrean lotes consumen por FEFO (primero el que vence antes). Todo es
+/// atómico dentro de la transacción activa del DbContext.
 /// </summary>
 public class KardexService
 {
@@ -21,10 +22,6 @@ public class KardexService
 
     public KardexService(AppDbContext db) => _db = db;
 
-    /// <summary>
-    /// Devuelve una bodega válida del tenant: la indicada (si existe y está activa)
-    /// o, si no se indica, la primera activa. Null si no hay ninguna.
-    /// </summary>
     public async Task<int?> ResolverBodegaAsync(string tenant, int? bodegaId)
     {
         if (bodegaId is int id)
@@ -34,112 +31,159 @@ public class KardexService
         }
         return await _db.Bodegas
             .Where(b => b.TenantId == tenant && b.Activa)
-            .OrderBy(b => b.Id)
-            .Select(b => (int?)b.Id)
-            .FirstOrDefaultAsync();
+            .OrderBy(b => b.Id).Select(b => (int?)b.Id).FirstOrDefaultAsync();
     }
 
-    /// <summary>
-    /// Aplica un movimiento en una bodega. En entradas con <paramref name="costoEntrada"/>
-    /// recalcula el costo promedio; en salidas y entradas sin costo usa el promedio vigente.
-    /// La guardia de stock de las salidas se valida contra la EXISTENCIA DE LA BODEGA.
-    /// Devuelve Ok=false si la bodega no tiene stock suficiente (no registra nada).
-    /// </summary>
     public async Task<MovimientoResultado> MoverAsync(
         int productoId, string tenant, int bodegaId, TipoMovimiento tipo, int cantidad,
-        decimal? costoEntrada, string docTipo, string? docNumero, string? concepto)
+        decimal? costoEntrada, string docTipo, string? docNumero, string? concepto, int? loteId = null)
     {
-        // 1) Existencia de la bodega (con guardia en salidas).
-        if (tipo == TipoMovimiento.Salida)
+        var rastrea = await _db.Productos
+            .Where(p => p.Id == productoId && p.TenantId == tenant)
+            .Select(p => p.RastreaLotes).FirstOrDefaultAsync();
+
+        return tipo == TipoMovimiento.Entrada
+            ? await EntradaAsync(productoId, tenant, bodegaId, cantidad, costoEntrada, docTipo, docNumero, concepto, rastrea, loteId)
+            : await SalidaAsync(productoId, tenant, bodegaId, cantidad, docTipo, docNumero, concepto, rastrea);
+    }
+
+    private async Task<MovimientoResultado> EntradaAsync(
+        int prod, string t, int bod, int qty, decimal? costoEntrada,
+        string docTipo, string? docNum, string? concepto, bool rastrea, int? loteId)
+    {
+        await _db.Database.ExecuteSqlInterpolatedAsync(
+            $@"INSERT INTO ""ExistenciaBodegas"" (""ProductoId"", ""BodegaId"", ""Stock"", ""TenantId"")
+               VALUES ({prod}, {bod}, {qty}, {t})
+               ON CONFLICT (""TenantId"", ""ProductoId"", ""BodegaId"")
+               DO UPDATE SET ""Stock"" = ""ExistenciaBodegas"".""Stock"" + {qty}");
+
+        int? loteUsado = null;
+        if (rastrea)
         {
-            var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"UPDATE ""ExistenciaBodegas"" SET ""Stock"" = ""Stock"" - {cantidad}
-                   WHERE ""TenantId"" = {tenant} AND ""ProductoId"" = {productoId}
-                     AND ""BodegaId"" = {bodegaId} AND ""Stock"" >= {cantidad}");
-            if (filas == 0)
-                return new MovimientoResultado(false, 0m, 0, 0m);
-        }
-        else
-        {
+            loteUsado = loteId ?? await LoteGeneralAsync(prod, t);
             await _db.Database.ExecuteSqlInterpolatedAsync(
-                $@"INSERT INTO ""ExistenciaBodegas"" (""ProductoId"", ""BodegaId"", ""Stock"", ""TenantId"")
-                   VALUES ({productoId}, {bodegaId}, {cantidad}, {tenant})
-                   ON CONFLICT (""TenantId"", ""ProductoId"", ""BodegaId"")
-                   DO UPDATE SET ""Stock"" = ""ExistenciaBodegas"".""Stock"" + {cantidad}");
+                $@"INSERT INTO ""ExistenciaLotes"" (""ProductoId"", ""BodegaId"", ""LoteId"", ""Stock"", ""TenantId"")
+                   VALUES ({prod}, {bod}, {loteUsado}, {qty}, {t})
+                   ON CONFLICT (""TenantId"", ""ProductoId"", ""BodegaId"", ""LoteId"")
+                   DO UPDATE SET ""Stock"" = ""ExistenciaLotes"".""Stock"" + {qty}");
         }
 
-        // 2) Producto: stock total + costo promedio global.
-        string sql;
-        if (tipo == TipoMovimiento.Entrada && costoEntrada.HasValue)
-        {
-            sql = @"
-                UPDATE ""Productos""
+        var sql = costoEntrada.HasValue
+            ? @"UPDATE ""Productos""
                 SET ""CostoPromedio"" = CASE WHEN (""Stock"" + @qty) > 0
                         THEN ((""Stock"" * ""CostoPromedio"") + (@qty * @cost)) / (""Stock"" + @qty)
                         ELSE ""CostoPromedio"" END,
                     ""Stock"" = ""Stock"" + @qty
-                WHERE ""Id"" = @id AND ""TenantId"" = @t
-                RETURNING ""Stock"", ""CostoPromedio"";";
-        }
-        else if (tipo == TipoMovimiento.Entrada)
+                WHERE ""Id"" = @id AND ""TenantId"" = @t RETURNING ""Stock"", ""CostoPromedio"";"
+            : @"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + @qty
+                WHERE ""Id"" = @id AND ""TenantId"" = @t RETURNING ""Stock"", ""CostoPromedio"";";
+
+        var (saldo, prom) = (await EjecutarAsync(sql, prod, t, qty, costoEntrada ?? 0m))!.Value;
+        var costoMov = costoEntrada ?? prom;
+        AddMov(prod, bod, loteUsado, TipoMovimiento.Entrada, qty, costoMov, saldo, prom, docTipo, docNum, concepto, t);
+        return new MovimientoResultado(true, costoMov, saldo, prom);
+    }
+
+    private async Task<MovimientoResultado> SalidaAsync(
+        int prod, string t, int bod, int qty, string docTipo, string? docNum, string? concepto, bool rastrea)
+    {
+        // Guardia a nivel de bodega (total).
+        var filas = await _db.Database.ExecuteSqlInterpolatedAsync(
+            $@"UPDATE ""ExistenciaBodegas"" SET ""Stock"" = ""Stock"" - {qty}
+               WHERE ""TenantId"" = {t} AND ""ProductoId"" = {prod}
+                 AND ""BodegaId"" = {bod} AND ""Stock"" >= {qty}");
+        if (filas == 0) return new MovimientoResultado(false, 0m, 0, 0m);
+
+        var minus = @"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - @qty
+                      WHERE ""Id"" = @id AND ""TenantId"" = @t RETURNING ""Stock"", ""CostoPromedio"";";
+        var (saldo, prom) = (await EjecutarAsync(minus, prod, t, qty, 0m))!.Value;
+
+        if (!rastrea)
         {
-            sql = @"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" + @qty
-                    WHERE ""Id"" = @id AND ""TenantId"" = @t RETURNING ""Stock"", ""CostoPromedio"";";
+            AddMov(prod, bod, null, TipoMovimiento.Salida, qty, prom, saldo, prom, docTipo, docNum, concepto, t);
+            return new MovimientoResultado(true, prom, saldo, prom);
         }
-        else
+
+        // FEFO: consumir de los lotes de esa bodega, el que vence antes primero.
+        var lotes = await _db.ExistenciaLotes
+            .Where(e => e.TenantId == t && e.ProductoId == prod && e.BodegaId == bod && e.Stock > 0)
+            .OrderBy(e => e.Lote!.FechaVencimiento == null)
+            .ThenBy(e => e.Lote!.FechaVencimiento)
+            .ThenBy(e => e.LoteId)
+            .Select(e => new { e.LoteId, e.Stock })
+            .ToListAsync();
+
+        var restante = qty;
+        foreach (var l in lotes)
         {
-            sql = @"UPDATE ""Productos"" SET ""Stock"" = ""Stock"" - @qty
-                    WHERE ""Id"" = @id AND ""TenantId"" = @t RETURNING ""Stock"", ""CostoPromedio"";";
+            if (restante <= 0) break;
+            var alloc = Math.Min(restante, l.Stock);
+            var f = await _db.Database.ExecuteSqlInterpolatedAsync(
+                $@"UPDATE ""ExistenciaLotes"" SET ""Stock"" = ""Stock"" - {alloc}
+                   WHERE ""TenantId"" = {t} AND ""ProductoId"" = {prod}
+                     AND ""BodegaId"" = {bod} AND ""LoteId"" = {l.LoteId} AND ""Stock"" >= {alloc}");
+            if (f == 0) return new MovimientoResultado(false, 0m, 0, 0m);
+            AddMov(prod, bod, l.LoteId, TipoMovimiento.Salida, alloc, prom, saldo, prom, docTipo, docNum, concepto, t);
+            restante -= alloc;
         }
+        if (restante > 0) return new MovimientoResultado(false, 0m, 0, 0m); // lotes insuficientes
 
-        var fila = await EjecutarAsync(sql, productoId, tenant, cantidad, costoEntrada ?? 0m);
-        var (saldo, promedio) = fila!.Value;
+        return new MovimientoResultado(true, prom, saldo, prom);
+    }
 
-        var costoMov = (tipo == TipoMovimiento.Entrada && costoEntrada.HasValue)
-            ? costoEntrada.Value
-            : promedio;
+    /// <summary>Lote "GENERAL" (sin vencimiento) del producto; lo crea si no existe.</summary>
+    private async Task<int> LoteGeneralAsync(int prod, string t)
+    {
+        var conn = _db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        var tx = _db.Database.CurrentTransaction;
+        if (tx is not null) cmd.Transaction = tx.GetDbTransaction();
+        cmd.CommandText = @"
+            INSERT INTO ""Lotes"" (""ProductoId"", ""Codigo"", ""FechaVencimiento"", ""TenantId"")
+            VALUES (@p, 'GENERAL', NULL, @t)
+            ON CONFLICT (""TenantId"", ""ProductoId"", ""Codigo"")
+            DO UPDATE SET ""Codigo"" = EXCLUDED.""Codigo""
+            RETURNING ""Id"";";
+        cmd.Parameters.Add(new NpgsqlParameter("p", prod));
+        cmd.Parameters.Add(new NpgsqlParameter("t", t));
+        return (int)(await cmd.ExecuteScalarAsync())!;
+    }
 
-        // 3) Traza en el kardex (con la bodega).
+    private void AddMov(int prod, int bod, int? lote, TipoMovimiento tipo, int cant,
+        decimal costoUnit, int saldo, decimal prom, string docTipo, string? docNum, string? concepto, string t) =>
         _db.MovimientosStock.Add(new MovimientoStock
         {
-            ProductoId = productoId,
-            BodegaId = bodegaId,
+            ProductoId = prod,
+            BodegaId = bod,
+            LoteId = lote,
             Tipo = tipo,
-            Cantidad = cantidad,
-            CostoUnitario = costoMov,
+            Cantidad = cant,
+            CostoUnitario = costoUnit,
             SaldoCantidad = saldo,
-            CostoPromedio = promedio,
+            CostoPromedio = prom,
             Fecha = DateTime.UtcNow,
             DocumentoTipo = docTipo,
-            DocumentoNumero = docNumero,
+            DocumentoNumero = docNum,
             Concepto = concepto,
-            TenantId = tenant,
+            TenantId = t,
         });
-
-        return new MovimientoResultado(true, costoMov, saldo, promedio);
-    }
 
     private async Task<(int saldo, decimal promedio)?> EjecutarAsync(
         string sql, int productoId, string tenant, int cantidad, decimal costo)
     {
         var conn = _db.Database.GetDbConnection();
-        if (conn.State != ConnectionState.Open)
-            await conn.OpenAsync();
-
+        if (conn.State != ConnectionState.Open) await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
         var tx = _db.Database.CurrentTransaction;
-        if (tx is not null)
-            cmd.Transaction = tx.GetDbTransaction();
-
+        if (tx is not null) cmd.Transaction = tx.GetDbTransaction();
         cmd.CommandText = sql;
         cmd.Parameters.Add(new NpgsqlParameter("id", productoId));
         cmd.Parameters.Add(new NpgsqlParameter("t", tenant));
         cmd.Parameters.Add(new NpgsqlParameter("qty", cantidad));
         cmd.Parameters.Add(new NpgsqlParameter("cost", costo));
-
         await using var reader = await cmd.ExecuteReaderAsync();
-        if (!await reader.ReadAsync())
-            return null;
+        if (!await reader.ReadAsync()) return null;
         return (reader.GetInt32(0), reader.GetDecimal(1));
     }
 }
