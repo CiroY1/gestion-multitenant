@@ -7,6 +7,61 @@
   </div>
 }
 
+<!-- Resumen de lotes con existencia -->
+<div class="row">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-md flex-shrink-0">
+            <span class="avatar-title bg-danger-subtle text-danger rounded fs-24">
+              <i class="bx bx-calendar-x"></i>
+            </span>
+          </div>
+          <div>
+            <p class="text-muted mb-1">Vencidos (con stock)</p>
+            <h4 class="mb-0">{{ vencidos() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-md flex-shrink-0">
+            <span class="avatar-title bg-warning-subtle text-warning rounded fs-24">
+              <i class="bx bx-time-five"></i>
+            </span>
+          </div>
+          <div>
+            <p class="text-muted mb-1">Por vencer (≤ 30 días)</p>
+            <h4 class="mb-0">{{ porVencer() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-md flex-shrink-0">
+            <span class="avatar-title bg-success-subtle text-success rounded fs-24">
+              <i class="bx bx-calendar-check"></i>
+            </span>
+          </div>
+          <div>
+            <p class="text-muted mb-1">Vigentes (con stock)</p>
+            <h4 class="mb-0">{{ vigentes() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-12">
     <div class="card">

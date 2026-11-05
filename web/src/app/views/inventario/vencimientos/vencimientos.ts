@@ -28,6 +28,11 @@ export class Vencimientos implements OnInit {
       this.lotes().filter((l) => l.stock > 0 && this.estado(l).orden <= 1).length
   )
 
+  // Resumen (solo lotes con existencia).
+  vencidos = computed(() => this.lotes().filter((l) => l.stock > 0 && this.estado(l).orden === 0).length)
+  porVencer = computed(() => this.lotes().filter((l) => l.stock > 0 && this.estado(l).orden === 1).length)
+  vigentes = computed(() => this.lotes().filter((l) => l.stock > 0 && this.estado(l).orden >= 2).length)
+
   ngOnInit(): void {
     this.cargar()
   }
