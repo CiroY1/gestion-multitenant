@@ -12,6 +12,7 @@ export type MenuItem = {
 }
 
 export const MENU: MenuItem[] = [
+  /* === Plantilla Reback: secciones no usadas, desactivadas por ahora (reactivar cuando se necesiten) ===
   {
     key: 'general',
     label: 'GENERAL',
@@ -43,6 +44,7 @@ export const MENU: MenuItem[] = [
       },
     ],
   },
+  === fin secciones desactivadas === */
   {
     key: 'gestion',
     label: 'GESTIÓN',
@@ -160,6 +162,7 @@ export const MENU: MenuItem[] = [
       },
     ],
   },
+  /* === Plantilla Reback: resto de secciones no usadas, desactivadas por ahora (reactivar cuando se necesiten) ===
   {
     key: 'apps',
     label: 'APPS',
@@ -922,4 +925,5 @@ export const MENU: MenuItem[] = [
     label: 'Disabled Item',
     disabled: true,
   },
+  === fin secciones desactivadas === */
 ]
