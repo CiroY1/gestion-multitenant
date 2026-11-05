@@ -8,6 +8,9 @@ import { KardexView } from './kardex/kardex'
 import { Ajustes } from './ajustes/ajustes'
 import { OrdenesCompra } from './ordenes/ordenes'
 import { PedidosVenta } from './pedidos/pedidos'
+import { Bodegas } from './bodegas/bodegas'
+import { Existencias } from './existencias/existencias'
+import { Traslados } from './traslados/traslados'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -54,5 +57,20 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'ajustes',
     component: Ajustes,
     data: { title: 'Ajustes' },
+  },
+  {
+    path: 'bodegas',
+    component: Bodegas,
+    data: { title: 'Bodegas' },
+  },
+  {
+    path: 'existencias',
+    component: Existencias,
+    data: { title: 'Existencias' },
+  },
+  {
+    path: 'traslados',
+    component: Traslados,
+    data: { title: 'Traslados' },
   },
 ]

@@ -108,6 +108,24 @@ export const MENU: MenuItem[] = [
         link: '/inventario/ajustes',
         parentKey: 'inventario',
       },
+      {
+        key: 'inventario-bodegas',
+        label: 'Bodegas',
+        link: '/inventario/bodegas',
+        parentKey: 'inventario',
+      },
+      {
+        key: 'inventario-existencias',
+        label: 'Existencias',
+        link: '/inventario/existencias',
+        parentKey: 'inventario',
+      },
+      {
+        key: 'inventario-traslados',
+        label: 'Traslados',
+        link: '/inventario/traslados',
+        parentKey: 'inventario',
+      },
     ],
   },
   {

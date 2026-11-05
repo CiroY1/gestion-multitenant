@@ -67,9 +67,17 @@
                   <small class="text-muted">No hay documentos confirmados para devolver.</small>
                 }
               </div>
-              <div class="col-md-5">
+              <div class="col-md-2">
+                <label class="form-label">Bodega</label>
+                <select class="form-select" [(ngModel)]="bodegaId">
+                  @for (b of bodegas(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3">
                 <label class="form-label">Motivo</label>
-                <input class="form-control" [(ngModel)]="motivo" placeholder="Opcional (devolución, avería, etc.)" />
+                <input class="form-control" [(ngModel)]="motivo" placeholder="Opcional" />
               </div>
             </div>
 

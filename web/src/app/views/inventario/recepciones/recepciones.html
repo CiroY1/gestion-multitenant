@@ -36,7 +36,7 @@
         @if (mostrarForm()) {
           <div class="mt-3 p-3 rounded bg-light-subtle border">
             <div class="row g-2 mb-3">
-              <div class="col-md-5">
+              <div class="col-md-4">
                 <label class="form-label">Proveedor</label>
                 <select class="form-select" [(ngModel)]="proveedor">
                   <option value="">Selecciona un proveedor…</option>
@@ -48,7 +48,15 @@
                   <small class="text-muted">No hay proveedores. Créalos en Terceros → Proveedores.</small>
                 }
               </div>
-              <div class="col-md-7">
+              <div class="col-md-3">
+                <label class="form-label">Bodega</label>
+                <select class="form-select" [(ngModel)]="bodegaId">
+                  @for (b of bodegas(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-5">
                 <label class="form-label">Observaciones</label>
                 <input class="form-control" [(ngModel)]="observaciones" placeholder="Opcional" />
               </div>

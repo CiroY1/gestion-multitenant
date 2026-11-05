@@ -38,10 +38,20 @@
             @if (errorForm()) {
               <div class="alert alert-danger">{{ errorForm() }}</div>
             }
-            <div class="mb-3">
-              <label class="form-label">Motivo</label>
-              <input class="form-control" [(ngModel)]="motivo"
-                placeholder="Conteo físico, avería, merma, sobrante…" />
+            <div class="row g-2 mb-3">
+              <div class="col-md-8">
+                <label class="form-label">Motivo</label>
+                <input class="form-control" [(ngModel)]="motivo"
+                  placeholder="Conteo físico, avería, merma, sobrante…" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Bodega</label>
+                <select class="form-select" [(ngModel)]="bodegaId">
+                  @for (b of bodegas(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.nombre }}</option>
+                  }
+                </select>
+              </div>
             </div>
 
             <label class="form-label">Líneas del ajuste</label>

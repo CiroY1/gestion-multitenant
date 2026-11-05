@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import {
   InventarioService,
+  type Bodega,
   type Producto,
   type Remision,
 } from '../inventario.service'
@@ -27,6 +28,7 @@ export class Remisiones implements OnInit {
   remisiones = signal<Remision[]>([])
   productos = signal<Producto[]>([])
   clientes = signal<Cliente[]>([])
+  bodegas = signal<Bodega[]>([])
   cargando = signal(true)
   error = signal<string | null>(null)
 
@@ -38,6 +40,7 @@ export class Remisiones implements OnInit {
 
   cliente = ''
   observaciones = ''
+  bodegaId: number | null = null
   lineas: LineaForm[] = []
 
   ngOnInit(): void {
@@ -48,6 +51,10 @@ export class Remisiones implements OnInit {
     })
     this.terceros.getClientes().subscribe({
       next: (c) => this.clientes.set(c),
+      error: () => {},
+    })
+    this.inv.getBodegas().subscribe({
+      next: (b) => this.bodegas.set(b.filter((x) => x.activa)),
       error: () => {},
     })
   }
@@ -70,6 +77,7 @@ export class Remisiones implements OnInit {
   abrirForm(): void {
     this.cliente = ''
     this.observaciones = ''
+    this.bodegaId = this.bodegas()[0]?.id ?? null
     this.errorForm.set(null)
     this.lineas = [{ productoId: this.productos()[0]?.id ?? 0, cantidad: 1 }]
     this.mostrarForm.set(true)
@@ -91,6 +99,7 @@ export class Remisiones implements OnInit {
       .crearRemision({
         cliente: this.cliente,
         observaciones: this.observaciones,
+        bodegaId: this.bodegaId ?? undefined,
         lineas: this.lineas,
       })
       .subscribe({

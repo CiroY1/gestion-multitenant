@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms'
 import { Observable } from 'rxjs'
 import {
   InventarioService,
+  type Bodega,
   type DocumentoDetalle,
   type EstadoDocumento,
   type Nota,
@@ -46,6 +47,8 @@ export class Notas implements OnInit {
   errorForm = signal<string | null>(null)
 
   // Formulario
+  bodegas = signal<Bodega[]>([])
+  bodegaId: number | null = null
   tipo: TipoNota = 'Credito'
   documentos = signal<{ id: number; numero: string }[]>([])
   documentoOrigenId: number | null = null
@@ -56,6 +59,10 @@ export class Notas implements OnInit {
 
   ngOnInit(): void {
     this.cargar()
+    this.inv.getBodegas().subscribe({
+      next: (b) => this.bodegas.set(b.filter((x) => x.activa)),
+      error: () => {},
+    })
   }
 
   cargar(): void {
@@ -77,6 +84,7 @@ export class Notas implements OnInit {
     this.tipo = 'Credito'
     this.documentoOrigenId = null
     this.motivo = ''
+    this.bodegaId = this.bodegas()[0]?.id ?? null
     this.lineas.set([])
     this.errorForm.set(null)
     this.mostrarForm.set(true)
@@ -160,6 +168,7 @@ export class Notas implements OnInit {
         tipo: this.tipo,
         documentoOrigenId: this.documentoOrigenId,
         motivo: this.motivo,
+        bodegaId: this.bodegaId ?? undefined,
         lineas: seleccionadas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })),
       })
       .subscribe({
