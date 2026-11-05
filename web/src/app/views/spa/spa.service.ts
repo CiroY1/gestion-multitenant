@@ -62,6 +62,36 @@ export interface NuevaSala {
   activa?: boolean
 }
 
+export interface Evento {
+  id: number
+  titulo: string
+  fechaHora: string
+  duracionMin: number
+  cupo: number
+  trabajadorId: number | null
+  trabajadorNombre: string
+  salaId: number | null
+  salaNombre: string
+  notas: string
+  inscritos: number
+}
+
+export interface NuevoEvento {
+  titulo: string
+  fechaHora: string
+  duracionMin: number
+  cupo: number
+  trabajadorId?: number | null
+  salaId?: number | null
+  notas?: string
+}
+
+export interface Inscripcion {
+  id: number
+  bebeId: number | null
+  bebeNombre: string
+}
+
 export interface Trabajador {
   id: number
   nombre: string
@@ -231,5 +261,36 @@ export class SpaService {
 
   eliminarSala(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(`${this.base}/salas/${id}`)
+  }
+
+  // --- Eventos / clases grupales ---
+
+  getEventos(): Observable<Evento[]> {
+    return this.http.get<Evento[]>(`${this.base}/eventos`)
+  }
+
+  crearEvento(dto: NuevoEvento): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/eventos`, dto)
+  }
+
+  eliminarEvento(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/eventos/${id}`)
+  }
+
+  getInscripciones(eventoId: number): Observable<Inscripcion[]> {
+    return this.http.get<Inscripcion[]>(`${this.base}/eventos/${eventoId}/inscripciones`)
+  }
+
+  inscribir(eventoId: number, bebeId: number): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(
+      `${this.base}/eventos/${eventoId}/inscribir`,
+      { bebeId }
+    )
+  }
+
+  desinscribir(eventoId: number, insId: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(
+      `${this.base}/eventos/${eventoId}/inscripciones/${insId}`
+    )
   }
 }

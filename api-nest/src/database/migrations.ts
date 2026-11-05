@@ -138,4 +138,36 @@ export const MIGRACIONES: Migracion[] = [
         ADD COLUMN IF NOT EXISTS "SalaNombre" text NOT NULL DEFAULT '';
     `,
   },
+  {
+    id: '009_spa_eventos',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "SpaEventos" (
+        "Id"               serial PRIMARY KEY,
+        "TenantId"         text NOT NULL,
+        "Titulo"           text NOT NULL,
+        "FechaHora"        timestamptz NOT NULL,
+        "DuracionMin"      integer NOT NULL DEFAULT 60,
+        "Cupo"             integer NOT NULL DEFAULT 10,
+        "TrabajadorId"     integer NULL,
+        "TrabajadorNombre" text NOT NULL DEFAULT '',
+        "SalaId"           integer NULL,
+        "SalaNombre"       text NOT NULL DEFAULT '',
+        "Notas"            text NOT NULL DEFAULT '',
+        "CreadoEn"         timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaEventos_Agenda"
+        ON "SpaEventos" ("TenantId", "FechaHora");
+
+      CREATE TABLE IF NOT EXISTS "SpaInscripciones" (
+        "Id"         serial PRIMARY KEY,
+        "TenantId"   text NOT NULL,
+        "EventoId"   integer NOT NULL,
+        "BebeId"     integer NULL,
+        "BebeNombre" text NOT NULL DEFAULT '',
+        "CreadoEn"   timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaInscripciones_Evento"
+        ON "SpaInscripciones" ("TenantId", "EventoId");
+    `,
+  },
 ]

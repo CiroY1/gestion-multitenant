@@ -10,10 +10,10 @@ import interactionPlugin from '@fullcalendar/interaction'
 import bootstrapPlugin from '@fullcalendar/bootstrap'
 import esLocale from '@fullcalendar/core/locales/es'
 import { forkJoin } from 'rxjs'
-import { SpaService, type Cita, type Tarea } from '../spa.service'
+import { SpaService, type Cita, type Evento, type Tarea } from '../spa.service'
 
 interface DetalleEvento {
-  tipo: 'Cita' | 'Tarea'
+  tipo: 'Cita' | 'Tarea' | 'Evento'
   titulo: string
   cuando: string
   estado: string
@@ -68,11 +68,16 @@ export class Calendario implements OnInit {
     forkJoin({
       citas: this.spa.getCitas(),
       tareas: this.spa.getTareas(),
+      eventos: this.spa.getEventos(),
     }).subscribe({
-      next: ({ citas, tareas }) => {
+      next: ({ citas, tareas, eventos }) => {
         this.calendarOptions = {
           ...this.calendarOptions,
-          events: [...this.mapCitas(citas), ...this.mapTareas(tareas)],
+          events: [
+            ...this.mapCitas(citas),
+            ...this.mapTareas(tareas),
+            ...this.mapEventos(eventos),
+          ],
         }
         this.cargando.set(false)
       },
@@ -128,6 +133,32 @@ export class Calendario implements OnInit {
         extra: t.trabajadorNombre ? `Responsable: ${t.trabajadorNombre}` : '',
       },
     }))
+  }
+
+  private mapEventos(eventos: Evento[]): EventInput[] {
+    return eventos.map((e) => {
+      const start = new Date(e.fechaHora)
+      const end = new Date(start.getTime() + (e.duracionMin || 60) * 60000)
+      const extra = [
+        e.trabajadorNombre ? `Terapeuta: ${e.trabajadorNombre}` : '',
+        e.salaNombre ? `Sala: ${e.salaNombre}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      return {
+        id: `evento-${e.id}`,
+        title: `Evento: ${e.titulo}`,
+        start,
+        end,
+        backgroundColor: '#14b8a6',
+        borderColor: '#14b8a6',
+        extendedProps: {
+          tipo: 'Evento',
+          estado: `${e.inscritos} / ${e.cupo} inscritos`,
+          extra,
+        },
+      }
+    })
   }
 
   private abrirDetalle(arg: EventClickArg): void {
