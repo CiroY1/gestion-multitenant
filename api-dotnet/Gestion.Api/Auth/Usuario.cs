@@ -11,6 +11,9 @@ public class Usuario
 
     public string Rol { get; set; } = "admin"; // admin / operador
 
+    /// <summary>Si está inactivo, no debería poder operar (control del administrador).</summary>
+    public bool Activo { get; set; } = true;
+
     public string EmpresaId { get; set; } = string.Empty; // = TenantId
     public Empresa? Empresa { get; set; }
 

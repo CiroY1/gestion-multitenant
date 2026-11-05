@@ -66,8 +66,13 @@ export class Sidebar {
     // Cada empresa ve solo los módulos que contrató. Por ahora el módulo spa
     // es opcional: se oculta si la empresa no lo tiene activo.
     const modulos = this.auth.modulos
+    const esAdmin = this.auth.usuario?.rol === 'admin'
     this.menuItems = MENU.filter((item) => {
       if ((item.key === 'spa' || item.parentKey === 'spa') && !modulos?.spa) {
+        return false
+      }
+      // La gestión de usuarios es solo para administradores.
+      if (item.key === 'sistema-usuarios' && !esAdmin) {
         return false
       }
       return true

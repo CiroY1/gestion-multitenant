@@ -1,0 +1,151 @@
+<app-page-title [title]="'Sistema'" [subtitle]="'Usuarios'" />
+
+@if (aviso()) {
+  <div class="alert alert-warning alert-dismissible">
+    {{ aviso() }}
+    <button type="button" class="btn-close" (click)="aviso.set(null)"></button>
+  </div>
+}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body border-bottom">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-sm flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-20">
+                <i class="bx bx-user-circle"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Usuarios de la empresa</h5>
+              <small class="text-muted">Solo un administrador puede gestionarlos</small>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-soft-secondary" (click)="cargar()">
+              <i class="bx bx-refresh me-1"></i>Actualizar
+            </button>
+            <button class="btn btn-primary" (click)="abrirCrear()">
+              <i class="bx bx-plus me-1"></i>Nuevo usuario
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive table-centered">
+        <table class="table text-nowrap mb-0">
+          <thead class="bg-light bg-opacity-50">
+            <tr>
+              <th>Email</th>
+              <th class="text-center">Rol</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (cargando()) {
+              <tr><td colspan="4" class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+              </td></tr>
+            } @else if (error()) {
+              <tr><td colspan="4" class="py-3"><div class="alert alert-danger mb-0">{{ error() }}</div></td></tr>
+            } @else if (usuarios().length === 0) {
+              <tr><td colspan="4" class="py-5 text-center text-muted">Sin usuarios.</td></tr>
+            } @else {
+              @for (u of usuarios(); track u.id) {
+                <tr>
+                  <td class="fw-medium">{{ u.email }}</td>
+                  <td class="text-center">
+                    @if (u.rol === 'admin') {
+                      <span class="badge bg-primary-subtle text-primary">Administrador</span>
+                    } @else {
+                      <span class="badge bg-light text-dark">Operador</span>
+                    }
+                  </td>
+                  <td class="text-center">
+                    @if (u.activo) {
+                      <span class="badge bg-success-subtle text-success">Activo</span>
+                    } @else {
+                      <span class="badge bg-danger-subtle text-danger">Inactivo</span>
+                    }
+                  </td>
+                  <td class="text-center text-nowrap">
+                    <button class="btn btn-sm btn-soft-secondary me-1" (click)="abrirEditar(u)" title="Editar">
+                      <i class="bx bx-edit fs-16"></i>
+                    </button>
+                    <button class="btn btn-sm btn-soft-danger" (click)="eliminar(u)" title="Eliminar">
+                      <i class="bx bx-trash fs-16"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!cargando() && !error() && usuarios().length) {
+        <div class="p-3 border-top text-muted">
+          <span class="fw-semibold">{{ usuarios().length }}</span> usuario(s)
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal: crear / editar usuario -->
+@if (mostrarForm()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ editId() ? 'Editar usuario' : 'Nuevo usuario' }}</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" [(ngModel)]="form.email"
+                     [disabled]="!!editId()" placeholder="usuario@empresa.com" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Rol</label>
+              <select class="form-select" [(ngModel)]="form.rol">
+                <option value="operador">Operador</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            @if (editId()) {
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="usrActivo" [(ngModel)]="form.activo" />
+                  <label class="form-check-label" for="usrActivo">Activo</label>
+                </div>
+              </div>
+            }
+            <div class="col-12">
+              <label class="form-label">
+                {{ editId() ? 'Nueva contraseña (opcional)' : 'Contraseña' }}
+              </label>
+              <input class="form-control" type="password" [(ngModel)]="form.password"
+                     [placeholder]="editId() ? 'Dejar vacío para no cambiarla' : 'Mínimo 6 caracteres'" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarForm.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="guardar()" [disabled]="guardando()">
+            @if (guardando()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
