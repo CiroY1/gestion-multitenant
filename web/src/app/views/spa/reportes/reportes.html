@@ -1,0 +1,156 @@
+<app-page-title [title]="'Spa & Bebés'" [subtitle]="'Reportes'" />
+
+<div class="d-flex justify-content-end mb-2">
+  <button class="btn btn-sm btn-soft-secondary" (click)="cargar()">
+    <i class="bx bx-refresh me-1"></i>Actualizar
+  </button>
+</div>
+
+@if (cargando()) {
+  <div class="card"><div class="card-body text-center text-muted py-5">
+    <span class="spinner-border spinner-border-sm me-2"></span>Cargando reporte…
+  </div></div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else if (data(); as d) {
+
+  <!-- KPIs -->
+  <div class="row">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-24"><i class="bx bx-calendar-check"></i></span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Citas atendidas</p>
+              <h4 class="mb-0">{{ d.citas.atendidas }} <small class="text-muted fs-14">/ {{ d.citas.total }}</small></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-warning-subtle text-warning rounded fs-24"><i class="bx bx-time-five"></i></span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Próximas citas</p>
+              <h4 class="mb-0">{{ d.citas.proximas }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-success-subtle text-success rounded fs-24"><i class="bx bx-wallet"></i></span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Ingresos por bonos</p>
+              <h4 class="mb-0">$ {{ d.bonos.ingresos | number: '1.0-0' }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-info-subtle text-info rounded fs-24"><i class="bx bx-group"></i></span>
+            </div>
+            <div>
+              <p class="text-muted mb-1">Inscritos en eventos</p>
+              <h4 class="mb-0">{{ d.eventos.inscritos }} <small class="text-muted fs-14">en {{ d.eventos.total }}</small></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segunda fila de indicadores -->
+  <div class="row">
+    <div class="col-6 col-xl-3">
+      <div class="card"><div class="card-body text-center">
+        <p class="text-muted mb-1">Bebés elegibles</p>
+        <h4 class="mb-0">{{ d.bebes.elegibles }} <small class="text-muted fs-14">/ {{ d.bebes.total }}</small></h4>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card"><div class="card-body text-center">
+        <p class="text-muted mb-1">Servicios activos</p>
+        <h4 class="mb-0">{{ d.servicios }}</h4>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card"><div class="card-body text-center">
+        <p class="text-muted mb-1">Trabajadores</p>
+        <h4 class="mb-0">{{ d.trabajadores }}</h4>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card"><div class="card-body text-center">
+        <p class="text-muted mb-1">Sesiones en bonos</p>
+        <h4 class="mb-0">{{ d.bonos.sesionesRestantes }}</h4>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Rankings -->
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="mb-3">Servicios más solicitados</h5>
+          @if (d.topServicios.length === 0) {
+            <p class="text-muted mb-0">Sin datos todavía.</p>
+          } @else {
+            @for (s of d.topServicios; track s.nombre) {
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-truncate">{{ s.nombre }}</span>
+                  <span class="fw-semibold">{{ s.citas }}</span>
+                </div>
+                <div class="progress" style="height: 6px">
+                  <div class="progress-bar bg-primary" [style.width.%]="pct(s.citas, d.topServicios)"></div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="mb-3">Citas por terapeuta</h5>
+          @if (d.porTerapeuta.length === 0) {
+            <p class="text-muted mb-0">Sin datos todavía.</p>
+          } @else {
+            @for (t of d.porTerapeuta; track t.nombre) {
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-truncate">{{ t.nombre }}</span>
+                  <span class="fw-semibold">{{ t.citas }}</span>
+                </div>
+                <div class="progress" style="height: 6px">
+                  <div class="progress-bar bg-success" [style.width.%]="pct(t.citas, d.porTerapeuta)"></div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

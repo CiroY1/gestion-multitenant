@@ -7,6 +7,7 @@ import { BonosController } from './bonos.controller'
 import { CitasController } from './citas.controller'
 import { EventosController } from './eventos.controller'
 import { PaquetesController } from './paquetes.controller'
+import { ReportesController } from './reportes.controller'
 import { SalasController } from './salas.controller'
 import { ServiciosController } from './servicios.controller'
 import { TareasController } from './tareas.controller'
@@ -25,6 +26,7 @@ import { TrabajadoresController } from './trabajadores.controller'
     EventosController,
     PaquetesController,
     BonosController,
+    ReportesController,
   ],
   providers: [ModSpaGuard, RolesGuard],
 })

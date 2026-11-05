@@ -118,6 +118,23 @@ export interface Bono {
   creadoEn: string
 }
 
+export interface ReporteResumen {
+  citas: {
+    total: number
+    programadas: number
+    atendidas: number
+    canceladas: number
+    proximas: number
+  }
+  servicios: number
+  trabajadores: number
+  bebes: { total: number; elegibles: number }
+  eventos: { total: number; inscritos: number }
+  bonos: { total: number; ingresos: number; sesionesRestantes: number }
+  topServicios: { nombre: string; citas: number }[]
+  porTerapeuta: { nombre: string; citas: number }[]
+}
+
 export interface Trabajador {
   id: number
   nombre: string
@@ -360,5 +377,11 @@ export class SpaService {
 
   eliminarBono(id: number): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(`${this.base}/bonos/${id}`)
+  }
+
+  // --- Reportes ---
+
+  getReporteResumen(): Observable<ReporteResumen> {
+    return this.http.get<ReporteResumen>(`${this.base}/reportes/resumen`)
   }
 }
