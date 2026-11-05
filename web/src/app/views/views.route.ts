@@ -17,6 +17,11 @@ export const VIEW_ROUTES: Route[] = [
       import('./terceros/terceros.route').then((mod) => mod.TERCEROS_ROUTES),
   },
   {
+    path: 'sistema',
+    loadChildren: () =>
+      import('./sistema/sistema.route').then((mod) => mod.SISTEMA_ROUTES),
+  },
+  {
     path: 'pages',
     loadChildren: () =>
       import('./pages/pages.route').then((mod) => mod.PAGES_ROUTES),
