@@ -167,6 +167,31 @@ public class DocumentosController : ControllerBase
         return Pdf(m);
     }
 
+    [HttpGet("ajustes/{id:int}/pdf")]
+    public async Task<IActionResult> Ajuste(int id)
+    {
+        var t = _tenant.GetTenantId();
+        var a = await _db.Ajustes
+            .Include(x => x.Lineas).ThenInclude(l => l.Producto)
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == t);
+        if (a is null) return NotFound();
+
+        var m = new DocumentoPdf
+        {
+            EmpresaNombre = await EmpresaNombreAsync(t),
+            Titulo = "Ajuste de inventario",
+            Numero = a.Numero,
+            Estado = a.Estado.ToString(),
+            Fecha = a.Fecha,
+            TerceroLabel = "Motivo",
+            TerceroValor = a.Motivo,
+            MostrarValores = false,
+            Lineas = a.Lineas.Select(l => new DocumentoPdfLinea(
+                $"{l.Producto?.Nombre ?? $"#{l.ProductoId}"} — {l.Tipo}", l.Cantidad, 0m, 0m)).ToList(),
+        };
+        return Pdf(m);
+    }
+
     private IActionResult Pdf(DocumentoPdf m) =>
         File(_pdf.Generar(m), "application/pdf", $"{m.Numero}.pdf");
 

@@ -79,6 +79,76 @@ namespace Gestion.Api.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Ajuste", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaAnulacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Numero");
+
+                    b.ToTable("Ajustes");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.AjusteLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AjusteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AjusteId");
+
+                    b.HasIndex("ProductoId");
+
+                    b.ToTable("AjusteLineas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -750,6 +820,25 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Empresa");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.AjusteLinea", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.Ajuste", "Ajuste")
+                        .WithMany("Lineas")
+                        .HasForeignKey("AjusteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ajuste");
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.MovimientoStock", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
@@ -951,6 +1040,11 @@ namespace Gestion.Api.Migrations
             modelBuilder.Entity("Gestion.Api.Auth.Empresa", b =>
                 {
                     b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.Ajuste", b =>
+                {
+                    b.Navigation("Lineas");
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.Categoria", b =>
