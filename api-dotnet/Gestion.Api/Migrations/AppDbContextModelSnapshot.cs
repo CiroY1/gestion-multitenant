@@ -341,6 +341,80 @@ namespace Gestion.Api.Migrations
                     b.ToTable("OrdenCompraLineas");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.PedidoVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cliente")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaAprobacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Observaciones")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Numero");
+
+                    b.ToTable("PedidosVenta");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.PedidoVentaLinea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CantidadDespachada")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PedidoVentaId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoVentaId");
+
+                    b.HasIndex("ProductoId");
+
+                    b.ToTable("PedidoVentaLineas");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Producto", b =>
                 {
                     b.Property<int>("Id")
@@ -552,11 +626,16 @@ namespace Gestion.Api.Migrations
                     b.Property<string>("Observaciones")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PedidoVentaId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("TenantId")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PedidoVentaId");
 
                     b.HasIndex("TenantId");
 
@@ -576,6 +655,9 @@ namespace Gestion.Api.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PedidoVentaLineaId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductoId")
                         .HasColumnType("integer");
 
@@ -583,6 +665,8 @@ namespace Gestion.Api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PedidoVentaLineaId");
 
                     b.HasIndex("ProductoId");
 
@@ -732,6 +816,25 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Producto");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.PedidoVentaLinea", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.PedidoVenta", "PedidoVenta")
+                        .WithMany("Lineas")
+                        .HasForeignKey("PedidoVentaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PedidoVenta");
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.Producto", b =>
                 {
                     b.HasOne("Gestion.Api.Inventario.Categoria", "Categoria")
@@ -809,8 +912,23 @@ namespace Gestion.Api.Migrations
                     b.Navigation("Receta");
                 });
 
+            modelBuilder.Entity("Gestion.Api.Inventario.Remision", b =>
+                {
+                    b.HasOne("Gestion.Api.Inventario.PedidoVenta", "PedidoVenta")
+                        .WithMany()
+                        .HasForeignKey("PedidoVentaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PedidoVenta");
+                });
+
             modelBuilder.Entity("Gestion.Api.Inventario.RemisionLinea", b =>
                 {
+                    b.HasOne("Gestion.Api.Inventario.PedidoVentaLinea", "PedidoVentaLinea")
+                        .WithMany()
+                        .HasForeignKey("PedidoVentaLineaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Gestion.Api.Inventario.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
@@ -822,6 +940,8 @@ namespace Gestion.Api.Migrations
                         .HasForeignKey("RemisionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("PedidoVentaLinea");
 
                     b.Navigation("Producto");
 
@@ -844,6 +964,11 @@ namespace Gestion.Api.Migrations
                 });
 
             modelBuilder.Entity("Gestion.Api.Inventario.OrdenCompra", b =>
+                {
+                    b.Navigation("Lineas");
+                });
+
+            modelBuilder.Entity("Gestion.Api.Inventario.PedidoVenta", b =>
                 {
                     b.Navigation("Lineas");
                 });

@@ -37,7 +37,8 @@ public class RemisionesController : ControllerBase
             .Select(r => new RemisionDto(
                 r.Id, r.Numero, r.Cliente, r.Observaciones, r.Fecha, r.Estado,
                 r.Lineas.Sum(l => l.Cantidad),
-                r.Lineas.Count))
+                r.Lineas.Count,
+                r.PedidoVenta != null ? r.PedidoVenta.Numero : null))
             .ToListAsync();
         return Ok(items);
     }
@@ -75,6 +76,29 @@ public class RemisionesController : ControllerBase
         if (ids.Any(id => !productos.Contains(id)))
             return BadRequest("Uno o más productos no existen.");
 
+        // Si la remisión es contra un pedido de venta, validar el pedido y sus líneas.
+        PedidoVenta? pedido = null;
+        if (dto.PedidoVentaId is int pvId)
+        {
+            pedido = await _db.PedidosVenta
+                .Include(p => p.Lineas).ThenInclude(l => l.Producto)
+                .FirstOrDefaultAsync(p => p.Id == pvId && p.TenantId == t);
+            if (pedido is null) return BadRequest("El pedido de venta no existe.");
+            if (pedido.Estado != EstadoPedido.Aprobado && pedido.Estado != EstadoPedido.Parcial)
+                return BadRequest("Solo se puede despachar contra un pedido aprobado o parcial.");
+
+            foreach (var l in dto.Lineas)
+            {
+                if (l.PedidoVentaLineaId is not int lineaId)
+                    return BadRequest("Cada línea debe referenciar una línea del pedido.");
+                var pl = pedido.Lineas.FirstOrDefault(x => x.Id == lineaId);
+                if (pl is null) return BadRequest("Una línea no pertenece al pedido indicado.");
+                var pendiente = pl.Cantidad - pl.CantidadDespachada;
+                if (l.Cantidad > pendiente)
+                    return BadRequest($"No puedes despachar más de lo pendiente ({pendiente}) de \"{pl.Producto?.Nombre ?? $"#{pl.ProductoId}"}\".");
+            }
+        }
+
         await using var tx = await _db.Database.BeginTransactionAsync();
 
         // Se crea como BORRADOR: no se descuenta stock hasta confirmar.
@@ -85,6 +109,7 @@ public class RemisionesController : ControllerBase
             Observaciones = dto.Observaciones,
             Fecha = DateTime.UtcNow,
             Estado = EstadoDocumento.Borrador,
+            PedidoVentaId = pedido?.Id,
             TenantId = t,
         };
 
@@ -94,6 +119,7 @@ public class RemisionesController : ControllerBase
             {
                 ProductoId = l.ProductoId,
                 Cantidad = l.Cantidad,
+                PedidoVentaLineaId = l.PedidoVentaLineaId,
             });
         }
 
@@ -131,6 +157,9 @@ public class RemisionesController : ControllerBase
             }
         }
 
+        // Si viene de un pedido de venta, acumular lo despachado y recalcular su estado.
+        await ActualizarPedidoAsync(r, sumar: true);
+
         r.Estado = EstadoDocumento.Confirmado;
         r.FechaConfirmacion = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -162,6 +191,9 @@ public class RemisionesController : ControllerBase
                 await _kardex.MoverAsync(l.ProductoId, t, TipoMovimiento.Entrada, l.Cantidad,
                     null, "REM", r.Numero, "Anulación de remisión");
             }
+
+            // Revertir lo despachado en el pedido de venta, si aplica.
+            await ActualizarPedidoAsync(r, sumar: false);
         }
 
         r.Estado = EstadoDocumento.Anulado;
@@ -170,6 +202,38 @@ public class RemisionesController : ControllerBase
         await tx.CommitAsync();
 
         return Ok(ToDetalle(r));
+    }
+
+    /// <summary>
+    /// Acumula (o revierte) en el pedido de venta la cantidad despachada por esta
+    /// remisión y recalcula su estado (aprobado / parcial / despachado).
+    /// </summary>
+    private async Task ActualizarPedidoAsync(Remision r, bool sumar)
+    {
+        if (r.PedidoVentaId is not int pvId) return;
+
+        var pedido = await _db.PedidosVenta
+            .Include(p => p.Lineas)
+            .FirstOrDefaultAsync(p => p.Id == pvId);
+        if (pedido is null) return;
+
+        foreach (var l in r.Lineas)
+        {
+            if (l.PedidoVentaLineaId is not int lineaId) continue;
+            var pl = pedido.Lineas.FirstOrDefault(x => x.Id == lineaId);
+            if (pl is null) continue;
+            pl.CantidadDespachada += sumar ? l.Cantidad : -l.Cantidad;
+            if (pl.CantidadDespachada < 0) pl.CantidadDespachada = 0;
+        }
+
+        // No tocar pedidos cerrados o anulados manualmente.
+        if (pedido.Estado is EstadoPedido.Cerrado or EstadoPedido.Anulado) return;
+
+        pedido.Estado = pedido.Lineas.All(x => x.CantidadDespachada >= x.Cantidad)
+            ? EstadoPedido.Despachado
+            : pedido.Lineas.Any(x => x.CantidadDespachada > 0)
+                ? EstadoPedido.Parcial
+                : EstadoPedido.Aprobado;
     }
 
     private static RemisionDetalleDto ToDetalle(Remision r) => new(

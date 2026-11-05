@@ -6,6 +6,7 @@ import { Recetas } from './recetas/recetas'
 import { Notas } from './notas/notas'
 import { KardexView } from './kardex/kardex'
 import { OrdenesCompra } from './ordenes/ordenes'
+import { PedidosVenta } from './pedidos/pedidos'
 
 export const INVENTARIO_ROUTES: Route[] = [
   {
@@ -22,6 +23,11 @@ export const INVENTARIO_ROUTES: Route[] = [
     path: 'recepciones',
     component: Recepciones,
     data: { title: 'Recepciones' },
+  },
+  {
+    path: 'pedidos-venta',
+    component: PedidosVenta,
+    data: { title: 'Pedidos de venta' },
   },
   {
     path: 'remisiones',
