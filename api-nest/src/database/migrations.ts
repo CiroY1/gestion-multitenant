@@ -102,4 +102,23 @@ export const MIGRACIONES: Migracion[] = [
         ADD COLUMN IF NOT EXISTS "DuracionMin" integer NOT NULL DEFAULT 30;
     `,
   },
+  {
+    id: '007_spa_bebes',
+    sql: `
+      CREATE TABLE IF NOT EXISTS "SpaBebes" (
+        "Id"              serial PRIMARY KEY,
+        "TenantId"        text NOT NULL,
+        "Nombre"          text NOT NULL,
+        "ClienteId"       integer NULL,
+        "ClienteNombre"   text NOT NULL DEFAULT '',
+        "FechaNacimiento" date NOT NULL,
+        "Peso"            numeric(5,2) NULL,
+        "Alergias"        text NOT NULL DEFAULT '',
+        "Notas"           text NOT NULL DEFAULT '',
+        "CreadoEn"        timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS "IX_SpaBebes_TenantId"
+        ON "SpaBebes" ("TenantId");
+    `,
+  },
 ]

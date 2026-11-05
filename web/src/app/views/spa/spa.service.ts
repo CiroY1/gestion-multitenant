@@ -82,6 +82,26 @@ export interface NuevaTarea {
   notas?: string
 }
 
+export interface Bebe {
+  id: number
+  nombre: string
+  clienteId: number | null
+  clienteNombre: string
+  fechaNacimiento: string // YYYY-MM-DD
+  peso: number | null
+  alergias: string
+  notas: string
+}
+
+export interface NuevoBebe {
+  nombre: string
+  clienteId?: number | null
+  fechaNacimiento: string
+  peso?: number | null
+  alergias?: string
+  notas?: string
+}
+
 /**
  * Módulo spa-bebés: vive en el SEGUNDO backend (NestJS, puerto 5046).
  * El token lo adjunta el interceptor (mismo JWT para ambos backends).
@@ -161,5 +181,23 @@ export class SpaService {
 
   completarTarea(id: number): Observable<{ ok: boolean }> {
     return this.http.post<{ ok: boolean }>(`${this.base}/tareas/${id}/completar`, {})
+  }
+
+  // --- Bebés (ficha) ---
+
+  getBebes(): Observable<Bebe[]> {
+    return this.http.get<Bebe[]>(`${this.base}/bebes`)
+  }
+
+  crearBebe(dto: NuevoBebe): Observable<{ id: number; ok: boolean }> {
+    return this.http.post<{ id: number; ok: boolean }>(`${this.base}/bebes`, dto)
+  }
+
+  actualizarBebe(id: number, dto: NuevoBebe): Observable<{ ok: boolean }> {
+    return this.http.put<{ ok: boolean }>(`${this.base}/bebes/${id}`, dto)
+  }
+
+  eliminarBebe(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/bebes/${id}`)
   }
 }
