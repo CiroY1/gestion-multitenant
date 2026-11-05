@@ -14,7 +14,10 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthenticationService)
   const router = inject(Router)
   const token = auth.session
-  const esApi = req.url.startsWith(environment.apiUrl)
+  // El mismo token sirve para ambos backends (.NET y NestJS comparten JWT_SECRET).
+  const esApi =
+    req.url.startsWith(environment.apiUrl) ||
+    req.url.startsWith(environment.nestApiUrl)
 
   if (token && esApi) {
     req = req.clone({

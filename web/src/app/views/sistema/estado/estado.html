@@ -1,0 +1,115 @@
+<app-page-title [title]="'Sistema'" [subtitle]="'Estado de servicios'" />
+
+<div class="alert alert-info d-flex align-items-start gap-2">
+  <i class="bx bx-info-circle fs-18 mt-1"></i>
+  <div>
+    Este frontend consume <span class="fw-semibold">dos backends</span> a la vez. Ambos
+    comparten el mismo token de sesión (JWT) y la misma base de datos. Aquí se comprueba,
+    en vivo, que la conexión con cada uno funciona.
+  </div>
+</div>
+
+<div class="row">
+  <!-- Backend .NET -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-primary-subtle text-primary rounded fs-22">
+                <i class="bx bx-server"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Backend .NET</h5>
+              <small class="text-muted">Identidad e inventario · puerto 5045</small>
+            </div>
+          </div>
+          @switch (net()) {
+            @case ('online') {
+              <span class="badge bg-success-subtle text-success"><i class="bx bx-check-circle me-1"></i>En línea</span>
+            }
+            @case ('caido') {
+              <span class="badge bg-danger-subtle text-danger"><i class="bx bx-x-circle me-1"></i>Sin conexión</span>
+            }
+            @default {
+              <span class="badge bg-light text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Verificando</span>
+            }
+          }
+        </div>
+        <p class="text-muted mt-3 mb-0">
+          Es el núcleo de identidad: procesa el login y emite el token de sesión.
+          Expone además todo el módulo de inventario.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backend NestJS -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <div class="avatar-md flex-shrink-0">
+              <span class="avatar-title bg-danger-subtle text-danger rounded fs-22">
+                <i class="bx bx-cube"></i>
+              </span>
+            </div>
+            <div>
+              <h5 class="mb-0">Backend NestJS</h5>
+              <small class="text-muted">Segundo backend · puerto 5046</small>
+            </div>
+          </div>
+          @switch (nest()) {
+            @case ('online') {
+              <span class="badge bg-success-subtle text-success"><i class="bx bx-check-circle me-1"></i>En línea</span>
+            }
+            @case ('caido') {
+              <span class="badge bg-danger-subtle text-danger"><i class="bx bx-x-circle me-1"></i>Sin conexión</span>
+            }
+            @default {
+              <span class="badge bg-light text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Verificando</span>
+            }
+          }
+        </div>
+
+        @if (identidad(); as u) {
+          <div class="border rounded p-2 mt-3">
+            <small class="text-muted d-block mb-1">
+              Identidad leída del token por Nest <span class="text-success">(JWT compartido ✓)</span>
+            </small>
+            <div class="d-flex flex-wrap gap-1">
+              <span class="badge bg-light text-dark">{{ u.email }}</span>
+              <span class="badge bg-light text-dark">tenant: {{ u.tenantId }}</span>
+              <span class="badge bg-light text-dark">rol: {{ u.rol }}</span>
+              @if (u.modInventario) {
+                <span class="badge bg-success-subtle text-success">módulo inventario</span>
+              }
+              @if (u.modSpa) {
+                <span class="badge bg-info-subtle text-info">módulo spa</span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (dbCheck(); as d) {
+          <div class="border rounded p-2 mt-2">
+            <small class="text-muted d-block mb-1">
+              Base de datos Neon <span class="text-success">(compartida ✓)</span>
+            </small>
+            <span class="fw-semibold">{{ d.productos }}</span> producto(s) del tenant
+            <span class="fw-semibold">{{ d.tenant }}</span>, leídos a través de Nest.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex justify-content-end">
+  <button class="btn btn-soft-secondary" (click)="verificar()" [disabled]="verificando()">
+    <i class="bx bx-refresh me-1"></i>Volver a comprobar
+  </button>
+</div>

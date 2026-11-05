@@ -162,6 +162,18 @@ export const MENU: MenuItem[] = [
       },
     ],
   },
+  {
+    key: 'sistema',
+    label: 'SISTEMA',
+    isTitle: true,
+  },
+  {
+    key: 'sistema-estado',
+    icon: 'iconamoon:lightning-1-duotone',
+    label: 'Estado de servicios',
+    link: '/sistema/estado',
+    parentKey: 'sistema',
+  },
   /* === Plantilla Reback: resto de secciones no usadas, desactivadas por ahora (reactivar cuando se necesiten) ===
   {
     key: 'apps',
