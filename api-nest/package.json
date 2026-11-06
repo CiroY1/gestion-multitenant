@@ -9,7 +9,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"src/**/*.ts\" --fix"
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "jest"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.4",
@@ -26,9 +27,12 @@
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",
     "@nestjs/schematics": "^10.2.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.7.5",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.11.10",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.3"
