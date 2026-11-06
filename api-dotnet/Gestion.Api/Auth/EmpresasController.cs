@@ -1,4 +1,5 @@
 using Gestion.Api.Data;
+using Gestion.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +19,13 @@ public record ActualizarEmpresaDto(string Nombre, bool ModuloInventario, bool Mo
 public class EmpresasController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly PasswordService _pwd;
 
-    public EmpresasController(AppDbContext db) => _db = db;
+    public EmpresasController(AppDbContext db, PasswordService pwd)
+    {
+        _db = db;
+        _pwd = pwd;
+    }
 
     [HttpGet]
     public async Task<IActionResult> Listar()
@@ -79,5 +85,96 @@ public class EmpresasController : ControllerBase
         empresa.ModuloSpa = dto.ModuloSpa;
         await _db.SaveChangesAsync();
         return Ok(new { ok = true });
+    }
+
+    // ---- Usuarios de una empresa (el super-admin entra a la empresa y los gestiona) ----
+
+    [HttpGet("{id}/usuarios")]
+    public async Task<IActionResult> ListarUsuarios(string id)
+    {
+        if (!await _db.Empresas.AnyAsync(e => e.Id == id)) return NotFound();
+        var items = await _db.Usuarios
+            .Where(u => u.EmpresaId == id)
+            .OrderBy(u => u.Email)
+            .Select(u => new { u.Id, u.Email, u.Rol, u.Activo, u.EsSuperAdmin })
+            .ToListAsync();
+        return Ok(items);
+    }
+
+    [HttpPost("{id}/usuarios")]
+    public async Task<IActionResult> CrearUsuario(string id, CrearUsuarioDto dto)
+    {
+        if (!await _db.Empresas.AnyAsync(e => e.Id == id)) return NotFound();
+
+        var email = (dto.Email ?? "").Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest("El email es obligatorio.");
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
+            return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+        if (await _db.Usuarios.AnyAsync(u => u.Email == email))
+            return BadRequest("Ya existe un usuario con ese email.");
+
+        var usuario = new Usuario
+        {
+            Email = email,
+            PasswordHash = _pwd.Hash(dto.Password),
+            Rol = NormalizarRol(dto.Rol),
+            EmpresaId = id,
+            Activo = true,
+        };
+        _db.Usuarios.Add(usuario);
+        await _db.SaveChangesAsync();
+        return Ok(new { usuario.Id, ok = true });
+    }
+
+    [HttpPut("{id}/usuarios/{uid:int}")]
+    public async Task<IActionResult> ActualizarUsuario(string id, int uid, ActualizarUsuarioDto dto)
+    {
+        var usuario = await _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == uid && u.EmpresaId == id);
+        if (usuario is null) return NotFound();
+        if (usuario.EsSuperAdmin)
+            return BadRequest("No se puede modificar un super-admin desde aquí.");
+
+        usuario.Rol = NormalizarRol(dto.Rol);
+        usuario.Activo = dto.Activo;
+        await _db.SaveChangesAsync();
+        return Ok(new { ok = true });
+    }
+
+    [HttpPost("{id}/usuarios/{uid:int}/password")]
+    public async Task<IActionResult> ResetPassword(string id, int uid, PasswordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
+            return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+
+        var usuario = await _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == uid && u.EmpresaId == id);
+        if (usuario is null) return NotFound();
+
+        usuario.PasswordHash = _pwd.Hash(dto.Password);
+        await _db.SaveChangesAsync();
+        return Ok(new { ok = true });
+    }
+
+    [HttpDelete("{id}/usuarios/{uid:int}")]
+    public async Task<IActionResult> EliminarUsuario(string id, int uid)
+    {
+        var usuario = await _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == uid && u.EmpresaId == id);
+        if (usuario is null) return NotFound();
+        if (usuario.EsSuperAdmin)
+            return BadRequest("No se puede eliminar un super-admin desde aquí.");
+
+        _db.Usuarios.Remove(usuario);
+        await _db.SaveChangesAsync();
+        return Ok(new { ok = true });
+    }
+
+    /// <summary>Solo se permiten dos roles: admin u operador.</summary>
+    private static string NormalizarRol(string? rol)
+    {
+        var r = (rol ?? "").Trim().ToLowerInvariant();
+        return r == "admin" ? "admin" : "operador";
     }
 }

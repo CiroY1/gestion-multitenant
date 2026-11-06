@@ -67,21 +67,24 @@ export class Sidebar {
     // es opcional: se oculta si la empresa no lo tiene activo.
     const modulos = this.auth.modulos
     const esAdmin = this.auth.usuario?.rol === 'admin'
+    // El super-admin de plataforma tiene bypass: ve y usa todos los módulos.
+    const esSuper = this.auth.esSuperAdmin
     this.menuItems = MENU.filter((item) => {
       if (
         (item.key === 'spa' ||
           item.parentKey === 'spa' ||
           item.key === 'spa-seccion') &&
-        !modulos?.spa
+        !modulos?.spa &&
+        !esSuper
       ) {
         return false
       }
-      // La gestión de usuarios es solo para administradores.
-      if (item.key === 'sistema-usuarios' && !esAdmin) {
+      // La gestión de usuarios es solo para administradores (o super-admin).
+      if (item.key === 'sistema-usuarios' && !esAdmin && !esSuper) {
         return false
       }
       // La gestión de empresas es solo para super-admin de plataforma.
-      if (item.key === 'sistema-empresas' && !this.auth.esSuperAdmin) {
+      if (item.key === 'sistema-empresas' && !esSuper) {
         return false
       }
       return true
