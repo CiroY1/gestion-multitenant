@@ -37,6 +37,7 @@ public class JwtService
             new(ClaimTypes.Role, usuario.Rol),
             new("modInventario", empresa.ModuloInventario ? "1" : "0"),
             new("modSpa", empresa.ModuloSpa ? "1" : "0"),
+            new("superAdmin", usuario.EsSuperAdmin ? "1" : "0"),
         };
 
         var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);

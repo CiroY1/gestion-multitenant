@@ -7,7 +7,13 @@ import { environment } from '@/environments/environment'
 interface LoginResponse {
   token: string
   expira: string
-  usuario: { email: string; rol: string; empresa: string; tenantId: string }
+  usuario: {
+    email: string
+    rol: string
+    empresa: string
+    tenantId: string
+    esSuperAdmin?: boolean
+  }
   modulos: { inventario: boolean; spa: boolean }
 }
 
@@ -19,6 +25,11 @@ export class AuthenticationService {
   /** ¿El usuario de la sesión es administrador? */
   get esAdmin(): boolean {
     return this.usuario?.rol === 'admin'
+  }
+
+  /** ¿Super-admin de plataforma? (gestiona todas las empresas) */
+  get esSuperAdmin(): boolean {
+    return this.usuario?.esSuperAdmin === true
   }
 
   public readonly authSessionKey = '_REBACK_AUTH_SESSION_KEY_'

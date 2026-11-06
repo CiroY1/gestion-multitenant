@@ -14,6 +14,9 @@ public class Usuario
     /// <summary>Si está inactivo, no debería poder operar (control del administrador).</summary>
     public bool Activo { get; set; } = true;
 
+    /// <summary>Super-admin de plataforma: gestiona todas las empresas y sus módulos.</summary>
+    public bool EsSuperAdmin { get; set; } = false;
+
     public string EmpresaId { get; set; } = string.Empty; // = TenantId
     public Empresa? Empresa { get; set; }
 

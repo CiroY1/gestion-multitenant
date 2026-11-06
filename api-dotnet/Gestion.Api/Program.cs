@@ -65,6 +65,10 @@ builder.Services
         };
     });
 
+// Política de super-admin de plataforma (gestiona todas las empresas).
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy("SuperAdmin", policy => policy.RequireClaim("superAdmin", "1")));
+
 // CORS: permitir que el frontend Angular (localhost:4200) consuma la API.
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.WithOrigins("http://localhost:4200")
