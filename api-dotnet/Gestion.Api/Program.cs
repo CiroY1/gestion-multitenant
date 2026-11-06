@@ -35,7 +35,11 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddSingleton<SearchPathInterceptor>();
+builder.Services.AddDbContext<AppDbContext>((sp, options) =>
+    options
+        .UseNpgsql(connectionString)
+        .AddInterceptors(sp.GetRequiredService<SearchPathInterceptor>()));
 
 // Motor de seguridad + identidad.
 builder.Services.AddHttpContextAccessor();
@@ -84,6 +88,10 @@ if (app.Environment.IsDevelopment())
     await Gestion.Api.Data.DbSeeder.SeedAsync(
         scope.ServiceProvider.GetRequiredService<AppDbContext>(),
         scope.ServiceProvider.GetRequiredService<Gestion.Api.Security.PasswordService>());
+
+    // Multi-tenant por schema: mover el negocio a t_demo (una vez) y
+    // aprovisionar el schema de cada empresa.
+    await Gestion.Api.Data.TenantSchemas.AplicarAsync(connectionString);
 }
 
 // Pipeline HTTP.

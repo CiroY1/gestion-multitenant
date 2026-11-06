@@ -47,7 +47,14 @@ public static class DbSeeder
         }
 
         // Inventario demo (si hay pocos productos, poblar para que no se vea vacío).
-        if (await db.Productos.CountAsync(p => p.TenantId == tenant) < 3)
+        // Solo mientras el negocio viva en public; si ya se movió a los schemas
+        // por empresa (multi-tenant por schema), se omite esta siembra.
+        var negocioEnPublic = await db.Database
+            .SqlQueryRaw<int>(
+                "SELECT count(*)::int AS \"Value\" FROM information_schema.tables " +
+                "WHERE table_schema = 'public' AND table_name = 'Productos'")
+            .FirstAsync();
+        if (negocioEnPublic > 0 && await db.Productos.CountAsync(p => p.TenantId == tenant) < 3)
         {
             var mapa = new Dictionary<string, int>();
             foreach (var nombre in new[] { "Bebidas", "Snacks", "Aseo", "Lácteos" })
