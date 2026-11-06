@@ -15,9 +15,9 @@ export const routes: Routes = [
     component: PrivateLayout,
     canActivate: [
       () => {
-        const currentUser = inject(AuthenticationService).session
+        const autenticado = inject(AuthenticationService).estaAutenticado
         const router: Router = inject(Router)
-        if (currentUser) return true
+        if (autenticado) return true
         const urlTree: UrlTree = router.parseUrl('/auth/sign-in')
         return new RedirectCommand(urlTree, { skipLocationChange: true })
       },

@@ -12,6 +12,19 @@ const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role
 const ISSUER = 'gestion-api'
 const AUDIENCE = 'gestion-clientes'
 
+/** Lee el JWT de la cookie HttpOnly "access_token" (sin cookie-parser). */
+function cookieExtractor(req: { headers?: { cookie?: string } }): string | null {
+  const raw = req?.headers?.cookie
+  if (!raw) return null
+  const found = raw
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('access_token='))
+  return found
+    ? decodeURIComponent(found.slice('access_token='.length))
+    : null
+}
+
 /** Identidad extraída del token (la misma que emite el login del backend .NET). */
 export interface UsuarioJwt {
   id: string
@@ -35,21 +48,29 @@ interface JwtPayload {
 }
 
 /**
- * Valida los MISMOS JWT HS256 que emite el backend .NET, usando el JWT_SECRET
- * compartido. Así un token obtenido en el login sirve contra ambos backends.
+ * Valida los MISMOS JWT (RS256) que emite el backend .NET, usando solo la llave
+ * PÚBLICA RSA (JWT_PUBLIC_KEY_B64). Nest no tiene la privada: puede validar pero
+ * no forjar tokens. Un token del login sirve contra ambos backends.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
-    const secret = process.env.JWT_SECRET
-    if (!secret) {
-      throw new Error('Falta JWT_SECRET en el entorno (.env.local de la raíz).')
+    const b64 = process.env.JWT_PUBLIC_KEY_B64
+    if (!b64) {
+      throw new Error(
+        'Falta JWT_PUBLIC_KEY_B64 en el entorno (.env.local de la raíz).',
+      )
     }
+    const publicKey = Buffer.from(b64, 'base64').toString('utf8')
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // Primero la cookie HttpOnly; si no, el header Authorization (compatibilidad).
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
-      secretOrKey: secret,
-      algorithms: ['HS256'],
+      secretOrKey: publicKey,
+      algorithms: ['RS256'],
       issuer: ISSUER,
       audience: AUDIENCE,
     })

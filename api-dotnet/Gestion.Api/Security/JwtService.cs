@@ -1,29 +1,27 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
-using Gestion.Api.Auth;
 using Microsoft.IdentityModel.Tokens;
+using Gestion.Api.Auth;
 
 namespace Gestion.Api.Security;
 
 /// <summary>
-/// Emite JWT firmados con HS256 usando JWT_SECRET (compartido por ambos backends).
-/// El token NO lleva datos confidenciales, solo identidad y permisos.
+/// Emite JWT firmados con RS256: .NET firma con la llave privada RSA y Nest
+/// valida solo con la pública (no puede forjar tokens). El token NO lleva datos
+/// confidenciales, solo identidad y permisos.
 /// </summary>
 public class JwtService
 {
     public const string Issuer = "gestion-api";
     public const string Audience = "gestion-clientes";
-    private readonly SymmetricSecurityKey _key;
+    private readonly RsaSecurityKey _key;
 
     public JwtService()
     {
-        var secret = Environment.GetEnvironmentVariable("JWT_SECRET")
-                     ?? throw new InvalidOperationException("Falta JWT_SECRET en el entorno.");
-        _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        _key = new RsaSecurityKey(RsaKeys.LoadPrivate());
     }
 
-    public SymmetricSecurityKey Key => _key;
+    public RsaSecurityKey Key => _key;
 
     public (string token, DateTime expira) CrearToken(Usuario usuario, Empresa empresa)
     {
@@ -40,7 +38,7 @@ public class JwtService
             new("superAdmin", usuario.EsSuperAdmin ? "1" : "0"),
         };
 
-        var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
+        var creds = new SigningCredentials(_key, SecurityAlgorithms.RsaSha256);
         var token = new JwtSecurityToken(
             issuer: Issuer,
             audience: Audience,

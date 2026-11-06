@@ -6,29 +6,26 @@ import { catchError, throwError } from 'rxjs'
 import { AuthenticationService } from '../services/auth.service'
 
 /**
- * Añade el token JWT (Authorization: Bearer) a las peticiones a la API y,
- * si la API responde 401 (token inválido/expirado), cierra sesión y
- * redirige al login en vez de dejar una sesión "zombie".
+ * El JWT viaja en una cookie HttpOnly (no accesible desde JS). Para que el
+ * navegador la envíe a la API (cross-origin), marcamos withCredentials en las
+ * peticiones a ambos backends. Si la API responde 401 (cookie inválida/expirada)
+ * limpiamos el estado local y redirigimos al login.
  */
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthenticationService)
   const router = inject(Router)
-  const token = auth.session
-  // El mismo token sirve para ambos backends (.NET y NestJS comparten JWT_SECRET).
   const esApi =
     req.url.startsWith(environment.apiUrl) ||
     req.url.startsWith(environment.nestApiUrl)
 
-  if (token && esApi) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    })
+  if (esApi) {
+    req = req.clone({ withCredentials: true })
   }
 
   return next(req).pipe(
     catchError((err) => {
       if (esApi && err?.status === 401) {
-        auth.logout()
+        auth.logoutLocal()
         router.navigate(['/auth/sign-in'])
       }
       return throwError(() => err)
