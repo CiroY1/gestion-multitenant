@@ -68,7 +68,12 @@ export class Sidebar {
     const modulos = this.auth.modulos
     const esAdmin = this.auth.usuario?.rol === 'admin'
     this.menuItems = MENU.filter((item) => {
-      if ((item.key === 'spa' || item.parentKey === 'spa') && !modulos?.spa) {
+      if (
+        (item.key === 'spa' ||
+          item.parentKey === 'spa' ||
+          item.key === 'spa-seccion') &&
+        !modulos?.spa
+      ) {
         return false
       }
       // La gestión de usuarios es solo para administradores.

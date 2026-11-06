@@ -163,6 +163,11 @@ export const MENU: MenuItem[] = [
     ],
   },
   {
+    key: 'spa-seccion',
+    label: 'SPA & BEBÉS',
+    isTitle: true,
+  },
+  {
     key: 'spa',
     icon: 'iconamoon:heart-duotone',
     label: 'Spa & Bebés',
