@@ -57,7 +57,18 @@
             } @else {
               @for (e of empresas(); track e.id) {
                 <tr>
-                  <td class="fw-medium">{{ e.nombre }}</td>
+                  <td class="fw-medium">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="avatar-xs flex-shrink-0 border rounded d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width:32px;height:32px">
+                        @if (e.logoUrl) {
+                          <img [src]="e.logoUrl" alt="" style="max-width:100%;max-height:100%;object-fit:contain" />
+                        } @else {
+                          <i class="bx bx-buildings text-muted"></i>
+                        }
+                      </div>
+                      <span>{{ e.nombre }}</span>
+                    </div>
+                  </td>
                   <td><span class="badge bg-light text-dark">{{ e.id }}</span></td>
                   <td>
                     @if (e.moduloInventario) {
@@ -99,23 +110,89 @@
 <!-- Modal: crear / editar empresa -->
 @if (mostrarForm()) {
   <div class="modal fade show d-block" tabindex="-1" (click)="mostrarForm.set(false)">
-    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">{{ editId() ? 'Editar empresa' : 'Nueva empresa' }}</h5>
           <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarForm.set(false)"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Identificador (tenant)</label>
-            <input class="form-control" [(ngModel)]="form.id" [disabled]="!!editId()" placeholder="ej. bebefeliz" />
-            <small class="text-muted">Minúsculas, sin espacios. No se puede cambiar luego.</small>
+          <!-- Logo -->
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="avatar-lg flex-shrink-0 border rounded d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width:72px;height:72px">
+              @if (form.logoUrl) {
+                <img [src]="form.logoUrl" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain" />
+              } @else {
+                <i class="bx bx-buildings fs-28 text-muted"></i>
+              }
+            </div>
+            <div class="flex-grow-1">
+              <label class="form-label mb-1">Logo</label>
+              @if (cloudinaryListo) {
+                <div class="mb-2">
+                  <input type="file" class="form-control form-control-sm" accept="image/*"
+                         (change)="onLogoFile($event)" [disabled]="subiendoLogo()" />
+                  @if (subiendoLogo()) {
+                    <small class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Subiendo a Cloudinary…</small>
+                  }
+                </div>
+              }
+              <input class="form-control form-control-sm" [(ngModel)]="form.logoUrl"
+                     placeholder="URL del logo (https://…)" />
+              @if (!cloudinaryListo) {
+                <small class="text-muted">Pega la URL de la imagen. (Para subir archivos, configura Cloudinary en environment.)</small>
+              }
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input class="form-control" [(ngModel)]="form.nombre" placeholder="ej. Spa Bebé Feliz" />
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Identificador (tenant)</label>
+              <input class="form-control" [(ngModel)]="form.id" [disabled]="!!editId()" placeholder="ej. bebefeliz" />
+              <small class="text-muted">Minúsculas, sin espacios. No se puede cambiar luego.</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" [(ngModel)]="form.nombre" placeholder="ej. Spa Bebé Feliz" />
+            </div>
           </div>
-          <label class="form-label">Módulos</label>
+
+          <!-- Contacto -->
+          <div class="fw-semibold mt-3 mb-2">Contacto</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Dirección</label>
+              <input class="form-control" [(ngModel)]="form.direccion" placeholder="Calle 123 #45-67" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" [(ngModel)]="form.telefono" placeholder="+57 300 000 0000" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" [(ngModel)]="form.email" placeholder="contacto@empresa.com" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Sitio web</label>
+              <input class="form-control" [(ngModel)]="form.sitioWeb" placeholder="https://empresa.com" />
+            </div>
+          </div>
+
+          <!-- Identificación fiscal -->
+          <div class="fw-semibold mt-3 mb-2">Identificación fiscal</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">NIT / RUC</label>
+              <input class="form-control" [(ngModel)]="form.nit" placeholder="900.123.456-7" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Razón social</label>
+              <input class="form-control" [(ngModel)]="form.razonSocial" placeholder="Empresa S.A.S." />
+            </div>
+          </div>
+
+          <!-- Módulos -->
+          <div class="fw-semibold mt-3 mb-2">Módulos</div>
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="modInv" [(ngModel)]="form.moduloInventario" />
             <label class="form-check-label" for="modInv">Inventario</label>
