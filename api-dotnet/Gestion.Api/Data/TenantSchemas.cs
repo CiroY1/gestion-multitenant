@@ -38,9 +38,16 @@ public static class TenantSchemas
         }
 
         await EnsureFuncionCloneAsync(conn);
+
+        // La plantilla (t_demo) debe tener las tablas nuevas de la lista ANTES de
+        // clonar, para que los schemas nuevos nazcan con ellas.
+        await AplicarMigracionesEnAsync(conn, "t_demo");
+
         foreach (var id in await EmpresasAsync(conn))
         {
             await ProvisionarEnAsync(conn, id);
+            if (Regex.IsMatch(id, "^[a-z0-9_]+$"))
+                await AplicarMigracionesEnAsync(conn, $"t_{id}");
         }
     }
 
@@ -51,6 +58,40 @@ public static class TenantSchemas
         await conn.OpenAsync();
         await EnsureFuncionCloneAsync(conn);
         await ProvisionarEnAsync(conn, tenantId);
+        if (Regex.IsMatch(tenantId, "^[a-z0-9_]+$"))
+            await AplicarMigracionesEnAsync(conn, $"t_{tenantId}");
+    }
+
+    /// <summary>
+    /// Aplica las migraciones de negocio (TenantMigraciones.Lista) DENTRO del
+    /// schema indicado. Idempotente: el SQL de la lista usa IF NOT EXISTS.
+    /// </summary>
+    private static async Task AplicarMigracionesEnAsync(NpgsqlConnection conn, string schema)
+    {
+        if (TenantMigraciones.Lista.Count == 0) return;
+        if (!Regex.IsMatch(schema, "^t_[a-z0-9_]+$")) return;
+        if (!await SchemaExisteAsync(conn, schema)) return;
+
+        // Fija el search_path al schema del tenant: el DDL sin esquema cae aquí.
+        await Exec(conn, $"SET search_path TO \"{schema}\", public");
+        try
+        {
+            foreach (var sql in TenantMigraciones.Lista)
+                await Exec(conn, sql);
+        }
+        finally
+        {
+            await Exec(conn, "SET search_path TO public");
+        }
+    }
+
+    private static async Task<bool> SchemaExisteAsync(NpgsqlConnection conn, string schema)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT 1 FROM information_schema.schemata WHERE schema_name = @s";
+        cmd.Parameters.AddWithValue("s", schema);
+        return await cmd.ExecuteScalarAsync() is not null;
     }
 
     private static async Task ProvisionarEnAsync(NpgsqlConnection conn, string tenantId)
