@@ -9,7 +9,7 @@ export const environment = {
   // uploadPreset: un "upload preset" en modo Unsigned (Settings > Upload).
   // Mientras estén vacíos, el modal solo permite pegar la URL del logo.
   cloudinary: {
-    cloudName: '',
-    uploadPreset: '',
+    cloudName: 'lgv2gx8m',
+    uploadPreset: 'ml_default',
   },
 }
