@@ -58,6 +58,12 @@ public class EmpresasController : ControllerBase
             ModuloSpa = dto.ModuloSpa,
         });
         await _db.SaveChangesAsync();
+
+        // Aprovisiona el schema de la nueva empresa al instante (sin reiniciar
+        // los backends): crea t_<id> con las tablas de negocio y spa.
+        await Gestion.Api.Data.TenantSchemas.ProvisionarAsync(
+            _db.Database.GetConnectionString()!, id);
+
         return Ok(new { id, ok = true });
     }
 

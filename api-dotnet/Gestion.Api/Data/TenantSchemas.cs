@@ -4,13 +4,14 @@ using Npgsql;
 namespace Gestion.Api.Data;
 
 /// <summary>
-/// Aprovisionamiento de schemas por empresa para los datos de NEGOCIO (.NET:
-/// inventario y terceros). La identidad (Empresas, Usuarios) y el historial de
-/// migraciones quedan en public; las tablas del spa las maneja el backend Nest.
+/// Aprovisionamiento de schemas por empresa. La identidad (Empresas, Usuarios)
+/// y el historial de migraciones quedan en public; cada empresa tiene su schema
+/// (t_&lt;id&gt;) con las tablas de negocio (inventario/terceros) y las del spa.
 ///
-/// Al arrancar: (1) si el negocio todavía vive en public (layout viejo), lo
-/// mueve a t_demo (preserva datos, FKs y secuencias); (2) por cada empresa crea
-/// su schema y replica las tablas de negocio desde t_demo (plantilla).
+/// - <see cref="AplicarAsync"/>: al arrancar, mueve a t_demo el negocio que aún
+///   esté en public y aprovisiona el schema de cada empresa.
+/// - <see cref="ProvisionarAsync"/>: crea/garantiza el schema de UNA empresa al
+///   vuelo (al crearla), sin reiniciar.
 /// </summary>
 public static class TenantSchemas
 {
@@ -24,11 +25,9 @@ public static class TenantSchemas
 
         // 1) Mover a t_demo las tablas de negocio que aún estén en public
         //    (excluye identidad/historial y las del spa, que mueve Nest).
-        var enPublic = await TablasAsync(conn, "public");
-        var aMover = enPublic
+        var aMover = (await TablasAsync(conn, "public"))
             .Where(t => !NoNegocio.Contains(t) && !t.StartsWith("Spa"))
             .ToList();
-
         if (aMover.Count > 0)
         {
             await Exec(conn, "CREATE SCHEMA IF NOT EXISTS \"t_demo\"");
@@ -38,24 +37,38 @@ public static class TenantSchemas
             }
         }
 
-        // 2) Aprovisionar el schema de cada empresa replicando las tablas de
-        //    negocio desde t_demo (plantilla). Las del spa las crea Nest.
-        var plantilla = (await TablasAsync(conn, "t_demo"))
-            .Where(t => !t.StartsWith("Spa"))
-            .ToList();
-        if (plantilla.Count == 0) return;
-
+        // 2) Aprovisionar el schema de cada empresa.
         foreach (var id in await EmpresasAsync(conn))
         {
-            if (!Regex.IsMatch(id, "^[a-z0-9_]+$")) continue;
-            var schema = $"t_{id}";
-            await Exec(conn, $"CREATE SCHEMA IF NOT EXISTS \"{schema}\"");
-            foreach (var t in plantilla)
-            {
-                await Exec(conn,
-                    $"CREATE TABLE IF NOT EXISTS \"{schema}\".\"{t}\" " +
-                    $"(LIKE \"t_demo\".\"{t}\" INCLUDING ALL)");
-            }
+            await ProvisionarEnAsync(conn, id);
+        }
+    }
+
+    /// <summary>Crea/garantiza el schema de una empresa (al crearla, en caliente).</summary>
+    public static async Task ProvisionarAsync(string connectionString, string tenantId)
+    {
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+        await ProvisionarEnAsync(conn, tenantId);
+    }
+
+    /// <summary>
+    /// Crea el schema del tenant y replica dentro TODAS las tablas de t_demo
+    /// (negocio + spa) con LIKE. Idempotente (IF NOT EXISTS).
+    /// </summary>
+    private static async Task ProvisionarEnAsync(NpgsqlConnection conn, string tenantId)
+    {
+        if (!Regex.IsMatch(tenantId, "^[a-z0-9_]+$")) return;
+        var schema = $"t_{tenantId}";
+        await Exec(conn, $"CREATE SCHEMA IF NOT EXISTS \"{schema}\"");
+
+        // Plantilla: todas las tablas de t_demo (negocio y spa).
+        var plantilla = await TablasAsync(conn, "t_demo");
+        foreach (var t in plantilla)
+        {
+            await Exec(conn,
+                $"CREATE TABLE IF NOT EXISTS \"{schema}\".\"{t}\" " +
+                $"(LIKE \"t_demo\".\"{t}\" INCLUDING ALL)");
         }
     }
 
