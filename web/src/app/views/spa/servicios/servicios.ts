@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -13,6 +14,7 @@ import { AuthenticationService } from '@/app/core/services/auth.service'
 })
 export class Servicios implements OnInit {
   private spa = inject(SpaService)
+  private confirm = inject(ConfirmService)
   private auth = inject(AuthenticationService)
 
   get esAdmin(): boolean {
@@ -98,8 +100,8 @@ export class Servicios implements OnInit {
     })
   }
 
-  eliminar(s: ServicioSpa): void {
-    if (!confirm(`¿Eliminar "${s.nombre}"?`)) return
+  async eliminar(s: ServicioSpa): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar "${s.nombre}"?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.spa.eliminarServicio(s.id).subscribe({
       next: () => this.cargar(),

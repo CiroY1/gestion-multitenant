@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -19,6 +20,7 @@ import { AuthenticationService } from '@/app/core/services/auth.service'
 })
 export class Productos implements OnInit {
   private inv = inject(InventarioService)
+  private confirm = inject(ConfirmService)
   private auth = inject(AuthenticationService)
 
   get esAdmin(): boolean {
@@ -122,8 +124,8 @@ export class Productos implements OnInit {
     })
   }
 
-  eliminar(p: Producto): void {
-    if (!confirm(`¿Eliminar "${p.nombre}"?`)) return
+  async eliminar(p: Producto): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar "${p.nombre}"?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.inv.eliminarProducto(p.id).subscribe({
       next: () => this.cargar(),

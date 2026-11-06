@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -20,6 +21,7 @@ import { AuthenticationService } from '@/app/core/services/auth.service'
 })
 export class Eventos implements OnInit {
   private spa = inject(SpaService)
+  private confirm = inject(ConfirmService)
   private auth = inject(AuthenticationService)
 
   get esAdmin(): boolean {
@@ -136,8 +138,8 @@ export class Eventos implements OnInit {
       })
   }
 
-  eliminar(e: Evento): void {
-    if (!confirm(`¿Eliminar el evento "${e.titulo}" y sus inscripciones?`)) return
+  async eliminar(e: Evento): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar el evento "${e.titulo}" y sus inscripciones?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.spa.eliminarEvento(e.id).subscribe({
       next: () => this.cargar(),

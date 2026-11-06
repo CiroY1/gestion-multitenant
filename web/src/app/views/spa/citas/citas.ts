@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -19,6 +20,7 @@ import { TercerosService, type Cliente } from '../../terceros/terceros.service'
 })
 export class Citas implements OnInit {
   private spa = inject(SpaService)
+  private confirm = inject(ConfirmService)
   private terceros = inject(TercerosService)
 
   citas = signal<Cita[]>([])
@@ -150,8 +152,8 @@ export class Citas implements OnInit {
     })
   }
 
-  cancelar(c: Cita): void {
-    if (!confirm(`¿Cancelar la cita de ${c.clienteNombre}?`)) return
+  async cancelar(c: Cita): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Cancelar la cita de ${c.clienteNombre}?`, titulo: 'Cancelar' }))) return
     this.procesando.set(c.id)
     this.spa.cancelarCita(c.id).subscribe({
       next: () => {

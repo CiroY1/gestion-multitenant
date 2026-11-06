@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -18,6 +19,7 @@ const MAX_DIAS = 365 // 12 meses
 })
 export class Bebes implements OnInit {
   private spa = inject(SpaService)
+  private confirm = inject(ConfirmService)
   private terceros = inject(TercerosService)
   private auth = inject(AuthenticationService)
 
@@ -140,8 +142,8 @@ export class Bebes implements OnInit {
     })
   }
 
-  eliminar(b: Bebe): void {
-    if (!confirm(`¿Eliminar la ficha de "${b.nombre}"?`)) return
+  async eliminar(b: Bebe): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar la ficha de "${b.nombre}"?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.spa.eliminarBebe(b.id).subscribe({
       next: () => this.cargar(),

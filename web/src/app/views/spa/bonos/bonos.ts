@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -14,6 +15,7 @@ import { AuthenticationService } from '@/app/core/services/auth.service'
 })
 export class Bonos implements OnInit {
   private spa = inject(SpaService)
+  private confirm = inject(ConfirmService)
   private terceros = inject(TercerosService)
   private auth = inject(AuthenticationService)
 
@@ -114,8 +116,8 @@ export class Bonos implements OnInit {
     })
   }
 
-  eliminar(b: Bono): void {
-    if (!confirm(`¿Eliminar el bono de "${b.clienteNombre}"?`)) return
+  async eliminar(b: Bono): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar el bono de "${b.clienteNombre}"?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.spa.eliminarBono(b.id).subscribe({
       next: () => this.cargar(),

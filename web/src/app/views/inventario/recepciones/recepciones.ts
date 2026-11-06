@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -26,6 +27,7 @@ interface LineaForm {
 })
 export class Recepciones implements OnInit {
   private inv = inject(InventarioService)
+  private confirm = inject(ConfirmService)
   private terceros = inject(TercerosService)
 
   recepciones = signal<Recepcion[]>([])
@@ -154,8 +156,8 @@ export class Recepciones implements OnInit {
     })
   }
 
-  anular(r: Recepcion): void {
-    if (!confirm(`¿Anular ${r.numero}? Si estaba confirmada, se revertirá el stock.`)) return
+  async anular(r: Recepcion): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Anular ${r.numero}? Si estaba confirmada, se revertirá el stock.`, titulo: 'Anular' }))) return
     this.aviso.set(null)
     this.procesando.set(r.id)
     this.inv.anularRecepcion(r.id).subscribe({
