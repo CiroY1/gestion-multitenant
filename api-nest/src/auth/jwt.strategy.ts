@@ -13,7 +13,7 @@ const ISSUER = 'gestion-api'
 const AUDIENCE = 'gestion-clientes'
 
 /** Lee el JWT de la cookie HttpOnly "access_token" (sin cookie-parser). */
-function cookieExtractor(req: { headers?: { cookie?: string } }): string | null {
+export function cookieExtractor(req: { headers?: { cookie?: string } }): string | null {
   const raw = req?.headers?.cookie
   if (!raw) return null
   const found = raw
