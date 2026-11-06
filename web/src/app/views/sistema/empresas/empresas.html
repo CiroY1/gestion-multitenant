@@ -247,7 +247,9 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label mb-1">Contraseña</label>
-                <input class="form-control" type="text" [(ngModel)]="formUsuario.password" placeholder="mín. 6" />
+                <app-password-input [(ngModel)]="formUsuario.password"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [sizeSm]="true" [showStrength]="true" placeholder="mín. 8" />
               </div>
               <div class="col-md-2">
                 <label class="form-label mb-1">Rol</label>
@@ -320,7 +322,7 @@
                                   [title]="u.activo ? 'Desactivar' : 'Activar'">
                             <i class="bx" [class.bx-toggle-right]="u.activo" [class.bx-toggle-left]="!u.activo"></i>
                           </button>
-                          <button class="btn btn-sm btn-soft-primary me-1" (click)="resetPassword(u)" title="Cambiar contraseña">
+                          <button class="btn btn-sm btn-soft-primary me-1" (click)="abrirPassword(u)" title="Cambiar contraseña">
                             <i class="bx bx-key"></i>
                           </button>
                           <button class="btn btn-sm btn-soft-danger" (click)="eliminarUsuario(u)" title="Eliminar">
@@ -337,6 +339,53 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" (click)="mostrarUsuarios.set(false)">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Modal: cambiar contraseña de un usuario -->
+@if (mostrarPassword()) {
+  <div class="modal fade show d-block" tabindex="-1" (click)="mostrarPassword.set(false)">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cambiar contraseña</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="mostrarPassword.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">
+            Usuario: <span class="fw-medium text-body">{{ usuarioPwd()?.email }}</span>
+          </p>
+          @if (avisoPwd()) {
+            <div class="alert alert-warning alert-dismissible">
+              {{ avisoPwd() }}
+              <button type="button" class="btn-close" (click)="avisoPwd.set(null)"></button>
+            </div>
+          }
+          <div class="mb-3">
+            <label class="form-label">Nueva contraseña</label>
+            <app-password-input [(ngModel)]="formPwd.password"
+                                [ngModelOptions]="{ standalone: true }"
+                                [showStrength]="true" placeholder="Mínimo 8, con letras y números" />
+          </div>
+          <div class="mb-1">
+            <label class="form-label">Confirmar contraseña</label>
+            <app-password-input [(ngModel)]="formPwd.confirm"
+                                [ngModelOptions]="{ standalone: true }"
+                                placeholder="Repite la contraseña" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" (click)="mostrarPassword.set(false)">Cancelar</button>
+          <button class="btn btn-success" (click)="guardarPassword()" [disabled]="guardandoPwd()">
+            @if (guardandoPwd()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Guardar contraseña
+          </button>
         </div>
       </div>
     </div>
