@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common'
 import { Pool } from 'pg'
+import { Db } from './db.service'
 import { MigrationsService } from './migrations.service'
 import { PG_POOL } from './pg.token'
 
@@ -29,7 +30,8 @@ export { PG_POOL } from './pg.token'
       },
     },
     MigrationsService,
+    Db,
   ],
-  exports: [PG_POOL],
+  exports: [PG_POOL, Db],
 })
 export class DatabaseModule {}

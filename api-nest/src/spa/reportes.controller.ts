@@ -1,6 +1,5 @@
 import { Controller, Get, Inject, UseGuards } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/pg.token'
+import { Db } from '../database/db.service'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import type { UsuarioJwt } from '../auth/jwt.strategy'
@@ -13,7 +12,7 @@ import { ModSpaGuard } from './mod-spa.guard'
 @UseGuards(JwtAuthGuard, ModSpaGuard)
 @Controller('spa/reportes')
 export class ReportesController {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(private readonly pool: Db) {}
 
   @Get('resumen')
   async resumen(@CurrentUser() u: UsuarioJwt) {

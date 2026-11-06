@@ -11,8 +11,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/database.module'
+import { Db } from '../database/db.service'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import type { UsuarioJwt } from '../auth/jwt.strategy'
@@ -38,7 +37,7 @@ interface ServicioDto {
 @UseGuards(JwtAuthGuard, ModSpaGuard, RolesGuard)
 @Controller('spa/servicios')
 export class ServiciosController {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(private readonly pool: Db) {}
 
   @Get()
   async listar(@CurrentUser() u: UsuarioJwt) {
