@@ -126,12 +126,20 @@
                 </div>
               </div>
             }
-            <div class="col-12">
+            <div class="col-md-6">
               <label class="form-label">
                 {{ editId() ? 'Nueva contraseña (opcional)' : 'Contraseña' }}
               </label>
-              <input class="form-control" type="password" [(ngModel)]="form.password"
-                     [placeholder]="editId() ? 'Dejar vacío para no cambiarla' : 'Mínimo 6 caracteres'" />
+              <app-password-input [(ngModel)]="form.password"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  [showStrength]="true"
+                                  [placeholder]="editId() ? 'Dejar vacío para no cambiarla' : 'Mínimo 8, con letras y números'" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirmar contraseña</label>
+              <app-password-input [(ngModel)]="form.confirm"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  placeholder="Repite la contraseña" />
             </div>
           </div>
         </div>

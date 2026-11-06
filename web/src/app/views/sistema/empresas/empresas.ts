@@ -1,4 +1,6 @@
 import { PageTitle } from '@/app/components/page-title'
+import { PasswordInput } from '@/app/components/password-input'
+import { evaluarPassword } from '@/app/core/password-policy'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -11,7 +13,7 @@ import {
 @Component({
   selector: 'app-sistema-empresas',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitle],
+  imports: [CommonModule, FormsModule, PageTitle, PasswordInput],
   templateUrl: './empresas.html',
 })
 export class Empresas implements OnInit {
@@ -52,6 +54,13 @@ export class Empresas implements OnInit {
   avisoUsuarios = signal<string | null>(null)
   guardandoUsuario = signal(false)
   formUsuario = { email: '', password: '', rol: 'operador' }
+
+  // --- Modal de cambio de contraseña ---
+  mostrarPassword = signal(false)
+  usuarioPwd = signal<UsuarioEmpresa | null>(null)
+  guardandoPwd = signal(false)
+  avisoPwd = signal<string | null>(null)
+  formPwd = { password: '', confirm: '' }
 
   ngOnInit(): void {
     this.cargar()
@@ -226,8 +235,8 @@ export class Empresas implements OnInit {
       this.avisoUsuarios.set('El email es obligatorio.')
       return
     }
-    if (this.formUsuario.password.length < 6) {
-      this.avisoUsuarios.set('La contraseña debe tener al menos 6 caracteres.')
+    if (!evaluarPassword(this.formUsuario.password).valida) {
+      this.avisoUsuarios.set('La contraseña debe tener mínimo 8 caracteres e incluir letras y números.')
       return
     }
     this.guardandoUsuario.set(true)
@@ -269,18 +278,37 @@ export class Empresas implements OnInit {
     })
   }
 
-  resetPassword(u: UsuarioEmpresa): void {
+  abrirPassword(u: UsuarioEmpresa): void {
+    this.usuarioPwd.set(u)
+    this.formPwd = { password: '', confirm: '' }
+    this.avisoPwd.set(null)
+    this.mostrarPassword.set(true)
+  }
+
+  guardarPassword(): void {
     const e = this.empresaSel()
-    if (!e) return
-    const nueva = window.prompt(`Nueva contraseña para ${u.email} (mín. 6):`)
-    if (nueva === null) return
-    if (nueva.length < 6) {
-      this.avisoUsuarios.set('La contraseña debe tener al menos 6 caracteres.')
+    const u = this.usuarioPwd()
+    if (!e || !u) return
+    if (!evaluarPassword(this.formPwd.password).valida) {
+      this.avisoPwd.set('La contraseña debe tener mínimo 8 caracteres e incluir letras y números.')
       return
     }
-    this.svc.resetPassword(e.id, u.id, nueva).subscribe({
-      next: () => this.avisoUsuarios.set('Contraseña actualizada.'),
-      error: (err) => this.errorUsuario(err, 'No se pudo cambiar la contraseña.'),
+    if (this.formPwd.password !== this.formPwd.confirm) {
+      this.avisoPwd.set('Las contraseñas no coinciden.')
+      return
+    }
+    this.guardandoPwd.set(true)
+    this.svc.resetPassword(e.id, u.id, this.formPwd.password).subscribe({
+      next: () => {
+        this.guardandoPwd.set(false)
+        this.mostrarPassword.set(false)
+        this.avisoUsuarios.set(`Contraseña de ${u.email} actualizada.`)
+      },
+      error: (err) => {
+        this.guardandoPwd.set(false)
+        const x = err as { error?: unknown }
+        this.avisoPwd.set(typeof x?.error === 'string' ? x.error : 'No se pudo cambiar la contraseña.')
+      },
     })
   }
 

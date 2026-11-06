@@ -1,4 +1,6 @@
 import { PageTitle } from '@/app/components/page-title'
+import { PasswordInput } from '@/app/components/password-input'
+import { evaluarPassword } from '@/app/core/password-policy'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -11,7 +13,7 @@ import {
 @Component({
   selector: 'app-sistema-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageTitle],
+  imports: [CommonModule, FormsModule, PageTitle, PasswordInput],
   templateUrl: './usuarios.html',
 })
 export class Usuarios implements OnInit {
@@ -28,6 +30,7 @@ export class Usuarios implements OnInit {
   form = {
     email: '',
     password: '',
+    confirm: '',
     rol: 'operador' as RolUsuario,
     activo: true,
   }
@@ -57,14 +60,14 @@ export class Usuarios implements OnInit {
 
   abrirCrear(): void {
     this.editId.set(null)
-    this.form = { email: '', password: '', rol: 'operador', activo: true }
+    this.form = { email: '', password: '', confirm: '', rol: 'operador', activo: true }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
 
   abrirEditar(u: Usuario): void {
     this.editId.set(u.id)
-    this.form = { email: u.email, password: '', rol: u.rol, activo: u.activo }
+    this.form = { email: u.email, password: '', confirm: '', rol: u.rol, activo: u.activo }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
@@ -73,8 +76,16 @@ export class Usuarios implements OnInit {
     const id = this.editId()
     if (!id) {
       // Crear
-      if (!this.form.email.trim() || this.form.password.length < 6) {
-        this.aviso.set('Email válido y contraseña de al menos 6 caracteres.')
+      if (!this.form.email.trim()) {
+        this.aviso.set('El email es obligatorio.')
+        return
+      }
+      if (!evaluarPassword(this.form.password).valida) {
+        this.aviso.set('La contraseña debe tener mínimo 8 caracteres e incluir letras y números.')
+        return
+      }
+      if (this.form.password !== this.form.confirm) {
+        this.aviso.set('Las contraseñas no coinciden.')
         return
       }
       this.guardando.set(true)
@@ -88,16 +99,21 @@ export class Usuarios implements OnInit {
     }
 
     // Editar: rol + activo y, opcionalmente, nueva contraseña.
+    const nueva = this.form.password.trim()
+    if (nueva) {
+      if (!evaluarPassword(nueva).valida) {
+        this.aviso.set('La nueva contraseña debe tener mínimo 8 caracteres e incluir letras y números.')
+        return
+      }
+      if (nueva !== this.form.confirm) {
+        this.aviso.set('Las contraseñas no coinciden.')
+        return
+      }
+    }
     this.guardando.set(true)
     this.svc.actualizar(id, { rol: this.form.rol, activo: this.form.activo }).subscribe({
       next: () => {
-        const nueva = this.form.password.trim()
         if (nueva) {
-          if (nueva.length < 6) {
-            this.guardando.set(false)
-            this.aviso.set('La nueva contraseña debe tener al menos 6 caracteres.')
-            return
-          }
           this.svc.resetPassword(id, nueva).subscribe({
             next: () => this.finOk(),
             error: (e) => this.finError(e),

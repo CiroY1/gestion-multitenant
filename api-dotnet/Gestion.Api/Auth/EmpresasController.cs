@@ -146,8 +146,8 @@ public class EmpresasController : ControllerBase
         var email = (dto.Email ?? "").Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(email))
             return BadRequest("El email es obligatorio.");
-        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
-            return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+        if (!PasswordPolicy.EsValida(dto.Password))
+            return BadRequest(PasswordPolicy.Mensaje);
         if (await _db.Usuarios.AnyAsync(u => u.Email == email))
             return BadRequest("Ya existe un usuario con ese email.");
 
@@ -182,8 +182,8 @@ public class EmpresasController : ControllerBase
     [HttpPost("{id}/usuarios/{uid:int}/password")]
     public async Task<IActionResult> ResetPassword(string id, int uid, PasswordDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
-            return BadRequest("La contraseña debe tener al menos 6 caracteres.");
+        if (!PasswordPolicy.EsValida(dto.Password))
+            return BadRequest(PasswordPolicy.Mensaje);
 
         var usuario = await _db.Usuarios
             .FirstOrDefaultAsync(u => u.Id == uid && u.EmpresaId == id);
