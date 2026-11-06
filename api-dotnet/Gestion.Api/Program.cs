@@ -68,6 +68,20 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
         };
+        // El JWT viaja en una cookie HttpOnly; si no viene en el header
+        // Authorization, tomarlo de la cookie "access_token".
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue("access_token", out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                return System.Threading.Tasks.Task.CompletedTask;
+            },
+        };
     });
 
 // Política de super-admin de plataforma (gestiona todas las empresas).

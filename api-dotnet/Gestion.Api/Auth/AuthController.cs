@@ -40,9 +40,13 @@ public class AuthController : ControllerBase
 
         var (token, expira) = _jwt.CrearToken(usuario, usuario.Empresa!);
 
+        // El JWT va en una cookie HttpOnly (no accesible desde JS: mitiga XSS).
+        // El cuerpo solo lleva datos NO sensibles para la UI, nunca el token.
+        Response.Cookies.Append("access_token", token, CookieDeSesion(expira));
+
         return Ok(new
         {
-            token,
+            ok = true,
             expira,
             usuario = new
             {
@@ -59,4 +63,33 @@ public class AuthController : ControllerBase
             },
         });
     }
+
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    public IActionResult Logout()
+    {
+        // Borra la cookie del JWT (mismas opciones base para que el navegador la elimine).
+        Response.Cookies.Delete("access_token", new CookieOptions
+        {
+            Path = "/",
+            Secure = CookieSecure,
+            SameSite = SameSiteMode.Lax,
+        });
+        return Ok(new { ok = true });
+    }
+
+    /// <summary>Secure sale de COOKIE_SECURE (true en producción con HTTPS).</summary>
+    private static bool CookieSecure =>
+        string.Equals(
+            Environment.GetEnvironmentVariable("COOKIE_SECURE"),
+            "true", StringComparison.OrdinalIgnoreCase);
+
+    private static CookieOptions CookieDeSesion(DateTime expira) => new()
+    {
+        HttpOnly = true,
+        Secure = CookieSecure,
+        SameSite = SameSiteMode.Lax,
+        Path = "/",
+        Expires = expira,
+    };
 }

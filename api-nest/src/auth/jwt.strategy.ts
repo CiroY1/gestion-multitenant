@@ -12,6 +12,19 @@ const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role
 const ISSUER = 'gestion-api'
 const AUDIENCE = 'gestion-clientes'
 
+/** Lee el JWT de la cookie HttpOnly "access_token" (sin cookie-parser). */
+function cookieExtractor(req: { headers?: { cookie?: string } }): string | null {
+  const raw = req?.headers?.cookie
+  if (!raw) return null
+  const found = raw
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('access_token='))
+  return found
+    ? decodeURIComponent(found.slice('access_token='.length))
+    : null
+}
+
 /** Identidad extraída del token (la misma que emite el login del backend .NET). */
 export interface UsuarioJwt {
   id: string
@@ -50,7 +63,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     const publicKey = Buffer.from(b64, 'base64').toString('utf8')
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // Primero la cookie HttpOnly; si no, el header Authorization (compatibilidad).
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        cookieExtractor,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: publicKey,
       algorithms: ['RS256'],

@@ -25,7 +25,8 @@ export class AuthenticationEffects {
                 this.route.snapshot.queryParams['returnUrl'] || '/'
               this.router.navigateByUrl(returnUrl)
             }
-            return loginSuccess({ user })
+            // La respuesta de login ya no es el modelo User de la plantilla.
+            return loginSuccess({ user: user as unknown as never })
           }),
           catchError((error) => of(loginFailure({ error })))
         )
