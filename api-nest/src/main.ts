@@ -8,9 +8,14 @@ async function bootstrap() {
   // Mismo prefijo de rutas que usa el frontend Angular: /api
   app.setGlobalPrefix('api')
 
-  // El frontend corre en 4200 y consume ambos backends.
+  // Orígenes permitidos desde variable de entorno (coma-separados).
+  // Por defecto, el frontend Angular local. credentials para auth por cookie.
+  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:4200')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
   app.enableCors({
-    origin: ['http://localhost:4200'],
+    origin: corsOrigins,
     credentials: true,
   })
 

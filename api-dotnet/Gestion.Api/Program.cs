@@ -26,9 +26,9 @@ var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? throw new InvalidOperationException("Falta DATABASE_URL. Verifica .env.local.");
 var connectionString = NeonConnection.ToNpgsql(databaseUrl);
 
-// Secreto para validar los JWT (el mismo que JwtService usa para firmarlos).
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
-    ?? throw new InvalidOperationException("Falta JWT_SECRET. Verifica .env.local.");
+// Llave pública RSA para validar los JWT (RS256). La privada solo la usa JwtService.
+var rsaPublicKey = new Microsoft.IdentityModel.Tokens.RsaSecurityKey(
+    Gestion.Api.Security.RsaKeys.LoadPublic());
 
 // Servicios.
 builder.Services
@@ -63,7 +63,8 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = JwtService.Audience,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            IssuerSigningKey = rsaPublicKey,
+            ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
         };
@@ -73,11 +74,16 @@ builder.Services
 builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdmin", policy => policy.RequireClaim("superAdmin", "1")));
 
-// CORS: permitir que el frontend Angular (localhost:4200) consuma la API.
+// CORS: orígenes permitidos desde variable de entorno (coma-separados).
+// Por defecto, el frontend Angular local. AllowCredentials para auth por cookie.
+var corsOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS")
+                   ?? "http://localhost:4200")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-    policy.WithOrigins("http://localhost:4200")
+    policy.WithOrigins(corsOrigins)
           .AllowAnyHeader()
-          .AllowAnyMethod()));
+          .AllowAnyMethod()
+          .AllowCredentials()));
 
 var app = builder.Build();
 

@@ -27,7 +27,6 @@ import { localStorageSyncReducer } from './store/layout/layout-reducers'
 import { DecimalPipe } from '@angular/common'
 import { provideEffects } from '@ngrx/effects'
 import { CalendarEffects } from './store/calendar/calendar.effects'
-import { FakeBackendProvider } from './helpers/fake-backend'
 import { AuthenticationEffects } from './store/authentication/authentication.effects'
 import { provideToastr } from 'ngx-toastr'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -44,7 +43,6 @@ const inMemoryScrollingFeatures: InMemoryScrollingFeature =
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    FakeBackendProvider,
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, inMemoryScrollingFeatures),
     DecimalPipe,
