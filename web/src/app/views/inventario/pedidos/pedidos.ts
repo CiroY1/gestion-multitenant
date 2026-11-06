@@ -1,4 +1,5 @@
 import { PageTitle } from '@/app/components/page-title'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -31,6 +32,7 @@ interface LineaDespachar {
 })
 export class PedidosVenta implements OnInit {
   private inv = inject(InventarioService)
+  private confirm = inject(ConfirmService)
   private terceros = inject(TercerosService)
 
   pedidos = signal<PedidoVenta[]>([])
@@ -142,13 +144,13 @@ export class PedidosVenta implements OnInit {
     this.accion(p, this.inv.aprobarPedidoVenta(p.id))
   }
 
-  cerrar(p: PedidoVenta): void {
-    if (!confirm(`¿Cerrar ${p.numero} con su saldo pendiente? No se podrá despachar más.`)) return
+  async cerrar(p: PedidoVenta): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Cerrar ${p.numero} con su saldo pendiente? No se podrá despachar más.`, titulo: 'Cerrar' }))) return
     this.accion(p, this.inv.cerrarPedidoVenta(p.id))
   }
 
-  anular(p: PedidoVenta): void {
-    if (!confirm(`¿Anular ${p.numero}?`)) return
+  async anular(p: PedidoVenta): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Anular ${p.numero}?`, titulo: 'Anular' }))) return
     this.accion(p, this.inv.anularPedidoVenta(p.id))
   }
 

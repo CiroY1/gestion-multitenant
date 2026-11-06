@@ -1,6 +1,7 @@
 import { PageTitle } from '@/app/components/page-title'
 import { PasswordInput } from '@/app/components/password-input'
 import { evaluarPassword } from '@/app/core/password-policy'
+import { ConfirmService } from '@/app/core/services/confirm.service'
 import { CommonModule } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
@@ -18,6 +19,7 @@ import {
 })
 export class Usuarios implements OnInit {
   private svc = inject(UsuariosService)
+  private confirm = inject(ConfirmService)
 
   usuarios = signal<Usuario[]>([])
   cargando = signal(true)
@@ -126,8 +128,8 @@ export class Usuarios implements OnInit {
     })
   }
 
-  eliminar(u: Usuario): void {
-    if (!confirm(`¿Eliminar al usuario "${u.email}"?`)) return
+  async eliminar(u: Usuario): Promise<void> {
+    if (!(await this.confirm.ask({ mensaje: `¿Eliminar al usuario "${u.email}"?`, titulo: 'Eliminar' }))) return
     this.aviso.set(null)
     this.svc.eliminar(u.id).subscribe({
       next: () => this.cargar(),

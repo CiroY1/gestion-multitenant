@@ -1,12 +1,16 @@
 import { Component, inject } from '@angular/core'
 import { Store } from '@ngrx/store'
 import { Vertical } from '../vertical/vertical'
+import { ConfirmDialog } from '@/app/components/confirm-dialog'
 
 @Component({
   selector: 'app-private-layout',
   standalone: true,
-  imports: [Vertical],
-  template: ` <app-vertical></app-vertical> `,
+  imports: [Vertical, ConfirmDialog],
+  template: `
+    <app-vertical></app-vertical>
+    <app-confirm-dialog />
+  `,
   styles: ``,
 })
 export class PrivateLayout {
