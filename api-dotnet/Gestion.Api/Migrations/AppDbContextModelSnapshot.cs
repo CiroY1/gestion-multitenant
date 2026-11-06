@@ -27,14 +27,35 @@ namespace Gestion.Api.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<string>("Direccion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
                     b.Property<bool>("ModuloInventario")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ModuloSpa")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Nit")
+                        .HasColumnType("text");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RazonSocial")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SitioWeb")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Telefono")
                         .HasColumnType("text");
 
                     b.HasKey("Id");

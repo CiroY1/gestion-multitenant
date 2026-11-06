@@ -6,8 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gestion.Api.Auth;
 
-public record CrearEmpresaDto(string Id, string Nombre, bool ModuloInventario, bool ModuloSpa);
-public record ActualizarEmpresaDto(string Nombre, bool ModuloInventario, bool ModuloSpa);
+public record CrearEmpresaDto(
+    string Id, string Nombre, bool ModuloInventario, bool ModuloSpa,
+    string? LogoUrl = null, string? Direccion = null, string? Telefono = null,
+    string? Email = null, string? SitioWeb = null, string? Nit = null,
+    string? RazonSocial = null);
+
+public record ActualizarEmpresaDto(
+    string Nombre, bool ModuloInventario, bool ModuloSpa,
+    string? LogoUrl = null, string? Direccion = null, string? Telefono = null,
+    string? Email = null, string? SitioWeb = null, string? Nit = null,
+    string? RazonSocial = null);
 
 /// <summary>
 /// Gestión de empresas (tenants) y sus módulos. SOLO super-admin de plataforma.
@@ -38,6 +47,13 @@ public class EmpresasController : ControllerBase
                 e.Nombre,
                 e.ModuloInventario,
                 e.ModuloSpa,
+                e.LogoUrl,
+                e.Direccion,
+                e.Telefono,
+                e.Email,
+                e.SitioWeb,
+                e.Nit,
+                e.RazonSocial,
                 usuarios = _db.Usuarios.Count(u => u.EmpresaId == e.Id),
             })
             .ToListAsync();
@@ -62,6 +78,13 @@ public class EmpresasController : ControllerBase
             Nombre = nombre,
             ModuloInventario = dto.ModuloInventario,
             ModuloSpa = dto.ModuloSpa,
+            LogoUrl = Limpiar(dto.LogoUrl),
+            Direccion = Limpiar(dto.Direccion),
+            Telefono = Limpiar(dto.Telefono),
+            Email = Limpiar(dto.Email),
+            SitioWeb = Limpiar(dto.SitioWeb),
+            Nit = Limpiar(dto.Nit),
+            RazonSocial = Limpiar(dto.RazonSocial),
         });
         await _db.SaveChangesAsync();
 
@@ -83,8 +106,22 @@ public class EmpresasController : ControllerBase
         if (!string.IsNullOrWhiteSpace(nombre)) empresa.Nombre = nombre;
         empresa.ModuloInventario = dto.ModuloInventario;
         empresa.ModuloSpa = dto.ModuloSpa;
+        empresa.LogoUrl = Limpiar(dto.LogoUrl);
+        empresa.Direccion = Limpiar(dto.Direccion);
+        empresa.Telefono = Limpiar(dto.Telefono);
+        empresa.Email = Limpiar(dto.Email);
+        empresa.SitioWeb = Limpiar(dto.SitioWeb);
+        empresa.Nit = Limpiar(dto.Nit);
+        empresa.RazonSocial = Limpiar(dto.RazonSocial);
         await _db.SaveChangesAsync();
         return Ok(new { ok = true });
+    }
+
+    /// <summary>Recorta y convierte vacío en null, para no guardar cadenas en blanco.</summary>
+    private static string? Limpiar(string? valor)
+    {
+        var v = (valor ?? "").Trim();
+        return string.IsNullOrEmpty(v) ? null : v;
     }
 
     // ---- Usuarios de una empresa (el super-admin entra a la empresa y los gestiona) ----

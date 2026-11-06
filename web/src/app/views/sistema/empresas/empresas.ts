@@ -25,7 +25,24 @@ export class Empresas implements OnInit {
   mostrarForm = signal(false)
   guardando = signal(false)
   editId = signal<string | null>(null)
-  form = { id: '', nombre: '', moduloInventario: true, moduloSpa: false }
+  subiendoLogo = signal(false)
+  form = {
+    id: '',
+    nombre: '',
+    moduloInventario: true,
+    moduloSpa: false,
+    logoUrl: '',
+    direccion: '',
+    telefono: '',
+    email: '',
+    sitioWeb: '',
+    nit: '',
+    razonSocial: '',
+  }
+
+  get cloudinaryListo(): boolean {
+    return this.svc.cloudinaryListo
+  }
 
   // --- Usuarios de la empresa seleccionada ---
   mostrarUsuarios = signal(false)
@@ -61,7 +78,19 @@ export class Empresas implements OnInit {
 
   abrirCrear(): void {
     this.editId.set(null)
-    this.form = { id: '', nombre: '', moduloInventario: true, moduloSpa: false }
+    this.form = {
+      id: '',
+      nombre: '',
+      moduloInventario: true,
+      moduloSpa: false,
+      logoUrl: '',
+      direccion: '',
+      telefono: '',
+      email: '',
+      sitioWeb: '',
+      nit: '',
+      razonSocial: '',
+    }
     this.aviso.set(null)
     this.mostrarForm.set(true)
   }
@@ -73,9 +102,40 @@ export class Empresas implements OnInit {
       nombre: e.nombre,
       moduloInventario: e.moduloInventario,
       moduloSpa: e.moduloSpa,
+      logoUrl: e.logoUrl ?? '',
+      direccion: e.direccion ?? '',
+      telefono: e.telefono ?? '',
+      email: e.email ?? '',
+      sitioWeb: e.sitioWeb ?? '',
+      nit: e.nit ?? '',
+      razonSocial: e.razonSocial ?? '',
     }
     this.aviso.set(null)
     this.mostrarForm.set(true)
+  }
+
+  /** Sube el archivo elegido a Cloudinary y rellena la URL del logo. */
+  onLogoFile(event: Event): void {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      this.aviso.set('El archivo debe ser una imagen.')
+      return
+    }
+    this.subiendoLogo.set(true)
+    this.aviso.set(null)
+    this.svc
+      .subirLogo(file)
+      .then((url) => {
+        this.form.logoUrl = url
+        this.subiendoLogo.set(false)
+      })
+      .catch((e) => {
+        this.subiendoLogo.set(false)
+        this.aviso.set(e?.message ?? 'No se pudo subir la imagen.')
+      })
+      .finally(() => (input.value = ''))
   }
 
   guardar(): void {
@@ -92,6 +152,7 @@ export class Empresas implements OnInit {
           nombre: this.form.nombre,
           moduloInventario: this.form.moduloInventario,
           moduloSpa: this.form.moduloSpa,
+          ...this.perfil(),
         })
         .subscribe({ next: () => this.finOk(), error: (e) => this.finError(e) })
       return
@@ -102,8 +163,22 @@ export class Empresas implements OnInit {
         nombre: this.form.nombre,
         moduloInventario: this.form.moduloInventario,
         moduloSpa: this.form.moduloSpa,
+        ...this.perfil(),
       })
       .subscribe({ next: () => this.finOk(), error: (e) => this.finError(e) })
+  }
+
+  /** Campos de identidad/personalización a enviar al backend. */
+  private perfil() {
+    return {
+      logoUrl: this.form.logoUrl.trim() || null,
+      direccion: this.form.direccion.trim() || null,
+      telefono: this.form.telefono.trim() || null,
+      email: this.form.email.trim() || null,
+      sitioWeb: this.form.sitioWeb.trim() || null,
+      nit: this.form.nit.trim() || null,
+      razonSocial: this.form.razonSocial.trim() || null,
+    }
   }
 
   private finOk(): void {

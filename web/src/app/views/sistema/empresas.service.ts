@@ -3,7 +3,18 @@ import { Injectable, inject } from '@angular/core'
 import type { Observable } from 'rxjs'
 import { environment } from '@/environments/environment'
 
-export interface Empresa {
+/** Datos de identidad/personalización comunes a crear y editar. */
+export interface EmpresaPerfil {
+  logoUrl?: string | null
+  direccion?: string | null
+  telefono?: string | null
+  email?: string | null
+  sitioWeb?: string | null
+  nit?: string | null
+  razonSocial?: string | null
+}
+
+export interface Empresa extends EmpresaPerfil {
   id: string
   nombre: string
   moduloInventario: boolean
@@ -11,14 +22,14 @@ export interface Empresa {
   usuarios: number
 }
 
-export interface NuevaEmpresa {
+export interface NuevaEmpresa extends EmpresaPerfil {
   id: string
   nombre: string
   moduloInventario: boolean
   moduloSpa: boolean
 }
 
-export interface EditarEmpresa {
+export interface EditarEmpresa extends EmpresaPerfil {
   nombre: string
   moduloInventario: boolean
   moduloSpa: boolean
@@ -46,6 +57,34 @@ export interface NuevoUsuarioEmpresa {
 export class EmpresasService {
   private http = inject(HttpClient)
   private base = `${environment.apiUrl}/empresas`
+
+  /** ¿Está configurado Cloudinary para subir imágenes? */
+  get cloudinaryListo(): boolean {
+    const c = environment.cloudinary
+    return !!c?.cloudName && !!c?.uploadPreset
+  }
+
+  /**
+   * Sube una imagen a Cloudinary (unsigned) y devuelve su URL (secure_url).
+   * La BD solo guarda esa URL; la imagen vive en Cloudinary.
+   */
+  async subirLogo(file: File): Promise<string> {
+    const c = environment.cloudinary
+    if (!c?.cloudName || !c?.uploadPreset) {
+      throw new Error('Cloudinary no está configurado.')
+    }
+    const data = new FormData()
+    data.append('file', file)
+    data.append('upload_preset', c.uploadPreset)
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${c.cloudName}/image/upload`,
+      { method: 'POST', body: data }
+    )
+    if (!res.ok) throw new Error('No se pudo subir la imagen a Cloudinary.')
+    const json = (await res.json()) as { secure_url?: string }
+    if (!json.secure_url) throw new Error('Cloudinary no devolvió la URL.')
+    return json.secure_url
+  }
 
   getEmpresas(): Observable<Empresa[]> {
     return this.http.get<Empresa[]>(this.base)

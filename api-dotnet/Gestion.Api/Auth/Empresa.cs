@@ -13,5 +13,19 @@ public class Empresa
     public bool ModuloInventario { get; set; } = true;
     public bool ModuloSpa { get; set; }
 
+    // --- Personalización / identidad de la empresa ---
+    /// <summary>URL del logo (alojado en Cloudinary); la BD solo guarda el enlace.</summary>
+    public string? LogoUrl { get; set; }
+
+    // Contacto
+    public string? Direccion { get; set; }
+    public string? Telefono { get; set; }
+    public string? Email { get; set; }
+    public string? SitioWeb { get; set; }
+
+    // Identificación fiscal (para documentos: facturas, remisiones, etc.)
+    public string? Nit { get; set; }
+    public string? RazonSocial { get; set; }
+
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 }
