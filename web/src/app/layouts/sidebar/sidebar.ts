@@ -75,6 +75,10 @@ export class Sidebar {
       if (item.key === 'sistema-usuarios' && !esAdmin) {
         return false
       }
+      // La gestión de empresas es solo para super-admin de plataforma.
+      if (item.key === 'sistema-empresas' && !this.auth.esSuperAdmin) {
+        return false
+      }
       return true
     })
   }

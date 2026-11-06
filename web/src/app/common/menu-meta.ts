@@ -200,6 +200,13 @@ export const MENU: MenuItem[] = [
     link: '/sistema/usuarios',
     parentKey: 'sistema',
   },
+  {
+    key: 'sistema-empresas',
+    icon: 'iconamoon:home-duotone',
+    label: 'Empresas',
+    link: '/sistema/empresas',
+    parentKey: 'sistema',
+  },
   /* === Plantilla Reback: resto de secciones no usadas, desactivadas por ahora (reactivar cuando se necesiten) ===
   {
     key: 'apps',

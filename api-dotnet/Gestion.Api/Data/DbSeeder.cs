@@ -38,6 +38,14 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
 
+        // El admin demo es también super-admin de plataforma (gestiona empresas).
+        var adminDemo = await db.Usuarios.FirstOrDefaultAsync(u => u.Email == "admin@demo.com");
+        if (adminDemo is not null && !adminDemo.EsSuperAdmin)
+        {
+            adminDemo.EsSuperAdmin = true;
+            await db.SaveChangesAsync();
+        }
+
         // Inventario demo (si hay pocos productos, poblar para que no se vea vacío).
         if (await db.Productos.CountAsync(p => p.TenantId == tenant) < 3)
         {

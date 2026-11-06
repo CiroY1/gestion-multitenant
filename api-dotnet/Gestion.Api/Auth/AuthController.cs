@@ -50,6 +50,7 @@ public class AuthController : ControllerBase
                 usuario.Rol,
                 empresa = usuario.Empresa!.Nombre,
                 tenantId = usuario.EmpresaId,
+                esSuperAdmin = usuario.EsSuperAdmin,
             },
             modulos = new
             {
