@@ -11,8 +11,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
-import { Pool } from 'pg'
-import { PG_POOL } from '../database/pg.token'
+import { Db } from '../database/db.service'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import type { UsuarioJwt } from '../auth/jwt.strategy'
@@ -32,7 +31,7 @@ interface VentaDto {
 @UseGuards(JwtAuthGuard, ModSpaGuard, RolesGuard)
 @Controller('spa/bonos')
 export class BonosController {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(private readonly pool: Db) {}
 
   @Get()
   async listar(@CurrentUser() u: UsuarioJwt) {
