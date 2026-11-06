@@ -20,6 +20,8 @@ export interface UsuarioJwt {
   rol: string
   modInventario: boolean
   modSpa: boolean
+  /** Super-admin de plataforma: bypass de módulos/roles. */
+  superAdmin: boolean
 }
 
 interface JwtPayload {
@@ -28,6 +30,7 @@ interface JwtPayload {
   tenantId: string
   modInventario?: string
   modSpa?: string
+  superAdmin?: string
   [key: string]: unknown
 }
 
@@ -63,6 +66,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       rol: (payload[ROLE_CLAIM] as string) ?? (payload['role'] as string) ?? '',
       modInventario: payload.modInventario === '1',
       modSpa: payload.modSpa === '1',
+      superAdmin: payload.superAdmin === '1',
     }
   }
 }

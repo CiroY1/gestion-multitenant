@@ -15,6 +15,8 @@ export class ModSpaGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest()
     const usuario = req.user as UsuarioJwt | undefined
+    // El super-admin de plataforma tiene bypass: accede a todo.
+    if (usuario?.superAdmin) return true
     if (!usuario?.modSpa) {
       throw new ForbiddenException('La empresa no tiene activo el módulo spa.')
     }
